@@ -5,6 +5,7 @@ import { packMsix } from "./packagers/msix";
 import { signFile } from "./sign";
 import { generateUpdateMetadata } from "./update";
 import { updateExeResource, getResourceOptionsFromConfig } from "./resource";
+import { checkDependencies } from "./utils/deps";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -35,6 +36,9 @@ async function main() {
       const shouldSign = args.includes("--sign");
       const shouldUpdate = args.includes("--update");
       
+      // 依存関係のチェック
+      await checkDependencies(target, shouldSign);
+
       console.log(`ビルドターゲット: ${target}`);
 
       // dist ディレクトリの作成
