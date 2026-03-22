@@ -2,8 +2,10 @@ import { join } from "node:path";
 
 export interface ElectrobunConfig {
   name: string;
+  id?: string;
   version: string;
   author?: string;
+  publisher?: string;
   windows?: {
     icon?: string;
     productId?: string;
