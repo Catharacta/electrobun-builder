@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-native/
+
+# Bun
+# bun.lockb は通常コミットしますが、pnpm を使用する場合は適宜調整
+# bun.lockb
+
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+bun-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Windows-specific
+*.exe
+*.msi
+*.msix
+*.wixobj
+*.wixpdb
+# ただし、テンプレートや特定のツールは含める必要があるため、必要に応じて ! で除外解除

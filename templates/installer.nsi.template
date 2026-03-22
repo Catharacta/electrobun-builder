@@ -1,0 +1,28 @@
+# NSIS Installer Template
+!define APP_NAME "{{APP_NAME}}"
+!define APP_VERSION "{{APP_VERSION}}"
+!define PRODUCT_ID "{{PRODUCT_ID}}"
+!define EXE_NAME "{{EXE_NAME}}"
+!define INSTALL_DIR "{{INSTALL_DIR}}"
+
+Name "${APP_NAME}"
+OutFile "${EXE_NAME}"
+InstallDir "$PROGRAMFILES64\${INSTALL_DIR}"
+RequestExecutionLevel admin
+
+Page directory
+Page instfiles
+
+Section "Install"
+  SetOutPath "$INSTDIR"
+  File /r "build\*.*"
+  
+  WriteUninstaller "$INSTDIR\uninstall.exe"
+  CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${EXE_NAME}"
+SectionEnd
+
+Section "Uninstall"
+  Delete "$DESKTOP\${APP_NAME}.lnk"
+  Delete "$INSTDIR\uninstall.exe"
+  RMDir /r "$INSTDIR"
+SectionEnd

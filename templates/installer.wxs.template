@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="*" Name="{{APP_NAME}}" Language="1041" Version="{{APP_VERSION}}" Manufacturer="{{COMPANY_NAME}}" UpgradeCode="{{UPGRADE_CODE}}">
+        <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+        <MajorUpgrade DowngradeErrorMessage="新しいバージョンの {{APP_NAME}} が既にインストールされています。" />
+        <MediaTemplate EmbedCab="yes" />
+
+        <Feature Id="ProductFeature" Title="{{APP_NAME}}" Level="1">
+            <ComponentGroupRef Id="ProductComponents" />
+        </Feature>
+
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFiles64Folder">
+                <Directory Id="INSTALLFOLDER" Name="{{INSTALL_DIR}}" />
+            </Directory>
+        </Directory>
+
+        <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+            <Component Id="MainExecutable" Guid="*">
+                <File Id="AppExe" Source="build\{{EXE_NAME}}" KeyPath="yes" />
+            </Component>
+        </ComponentGroup>
+    </Product>
+</Wix>
