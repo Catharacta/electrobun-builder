@@ -1,4 +1,4 @@
-# @catharacta/electrobun-builder
+# electrobun-builder-for-windows
 
 Packaging and signing tool for Electrobun applications on Windows. Support for NSIS, WiX, and MSIX formats.
 
@@ -14,9 +14,9 @@ Packaging and signing tool for Electrobun applications on Windows. Support for N
 ## Installation
 
 ```bash
-npm install -g @catharacta/electrobun-builder
+npm install -g electrobun-builder-for-windows
 # or
-bun install -g @catharacta/electrobun-builder
+bun install -g electrobun-builder-for-windows
 ```
 
 ## OS Dependencies
@@ -49,10 +49,10 @@ electrobun-builder build --target msix --update --baseUrl https://example.com/do
 
 ## Configuration
 
-`@catharacta/electrobun-builder` reads `electrobun.config.ts` from your project root.
+`electrobun-builder-for-windows` reads `electrobun.config.ts` from your project root.
 
 ```typescript
-import { type ElectrobunConfig } from "@catharacta/electrobun-builder";
+import { type ElectrobunConfig } from "electrobun-builder-for-windows";
 
 const config: ElectrobunConfig = {
   name: "MyApp",
