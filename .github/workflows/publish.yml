@@ -30,5 +30,8 @@ jobs:
       - name: Build
         run: pnpm run build
         
+      - name: Clean up .npmrc for OIDC
+        run: rm -f .npmrc
+        
       - name: Publish to npm
         run: npm publish --provenance --access public
