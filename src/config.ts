@@ -10,6 +10,21 @@ export interface ElectrobunConfig {
     icon?: string;
     productId?: string;
     installDir?: string;
+    msix?: {
+      publisher?: string;
+      publisherDisplayName?: string;
+      identityName?: string;
+      capabilities?: string[];
+      extensions?: {
+        fileAssociations?: {
+          name: string;
+          extensions: string[];
+        }[];
+        protocols?: {
+          name: string;
+        }[];
+      };
+    };
   };
   views?: {
     [key: string]: {

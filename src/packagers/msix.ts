@@ -5,46 +5,149 @@ import { ElectrobunConfig } from '../config';
 
 /**
  * MSIX パッケージを生成します。
- * makeappx.exe がパスに通っている必要があります。
  */
 export async function packMsix(config: ElectrobunConfig, buildDir: string, outDir: string): Promise<string> {
     const appName = config.name || 'ElectrobunApp';
-    const version = config.version || '1.0.0.0'; // MSIX must be 4 quad version
+    const version = config.version || '1.0.0';
     const identifier = config.id || `com.example.${appName.toLowerCase()}`;
-    const publisher = config.publisher || 'CN=Example';
+    const msixConfig = config.windows?.msix;
     
-    // Normalize version to quad (e.g. 1.0.0 -> 1.0.0.0)
+    // MSIX must be 4 quad version (e.g. 1.0.0.0)
     const quadVersion = version.split('.').length === 3 ? `${version}.0` : version;
 
-    const manifestTemplatePath = path.join(__dirname, '../../templates/AppxManifest.xml.template');
-    let manifest = fs.readFileSync(manifestTemplatePath, 'utf8');
+    // 1. Assets の準備
+    await ensureAssets(config, buildDir);
 
-    manifest = manifest
-        .replace(/{{APP_NAME}}/g, appName)
-        .replace(/{{VERSION}}/g, quadVersion)
-        .replace(/{{IDENTIFIER}}/g, identifier)
-        .replace(/{{PUBLISHER}}/g, publisher)
-        .replace(/{{PUBLISHER_DISPLAY_NAME}}/g, appName)
-        .replace(/{{DESCRIPTION}}/g, appName)
-        .replace(/{{EXECUTABLE_NAME}}/g, `${appName}.exe`);
-
+    // 2. マニフェストの生成
+    const manifest = generateManifest(config, identifier, quadVersion);
     const manifestPath = path.join(buildDir, 'AppxManifest.xml');
     fs.writeFileSync(manifestPath, manifest);
 
-    // TODO: Assets directory and logos must exist for real MSIX
+    // 3. パッケージング
+    const outputFilename = `${appName}_${quadVersion}_x64.msix`;
+    const outputMsix = path.join(outDir, outputFilename);
+    
+    try {
+        console.log(`Creating MSIX package: ${outputMsix}`);
+        // makeappx が PATH に通っていることは deps.ts で確認済み
+        execSync(`makeappx pack /d "${buildDir}" /p "${outputMsix}" /o`, { stdio: 'inherit' });
+        console.log(`Successfully created MSIX package: ${outputMsix}`);
+        return outputMsix;
+    } catch (error) {
+        throw new Error(`Failed to create MSIX package: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+/**
+ * AppxManifest.xml を動的に生成します。
+ */
+function generateManifest(config: ElectrobunConfig, identifier: string, version: string): string {
+    const appName = config.name || 'ElectrobunApp';
+    const msixConfig = config.windows?.msix;
+    const publisher = msixConfig?.publisher || 'CN=Electrobun';
+    const publisherDisplayName = msixConfig?.publisherDisplayName || config.author || 'Electrobun Developer';
+    const description = appName;
+    const executableName = `${appName}.exe`;
+
+    const manifestTemplatePath = path.join(__dirname, '../../templates/AppxManifest.xml.template');
+    if (!fs.existsSync(manifestTemplatePath)) {
+        throw new Error(`Manifest template not found: ${manifestTemplatePath}`);
+    }
+
+    let manifest = fs.readFileSync(manifestTemplatePath, 'utf8');
+
+    // 基本項目の置換
+    manifest = manifest
+        .replace(/{{IDENTIFIER}}/g, identifier)
+        .replace(/{{PUBLISHER}}/g, publisher)
+        .replace(/{{VERSION}}/g, version)
+        .replace(/{{APP_NAME}}/g, appName)
+        .replace(/{{PUBLISHER_DISPLAY_NAME}}/g, publisherDisplayName)
+        .replace(/{{DESCRIPTION}}/g, description)
+        .replace(/{{EXECUTABLE_NAME}}/g, executableName);
+
+    // Extensions の生成
+    const extensions = generateExtensionsXml(msixConfig?.extensions);
+    manifest = manifest.replace(/{{EXTENSIONS}}/g, extensions);
+
+    // Capabilities の追加生成
+    const capabilities = generateCapabilitiesXml(msixConfig?.capabilities);
+    manifest = manifest.replace(/{{CAPABILITIES}}/g, capabilities);
+
+    return manifest;
+}
+
+/**
+ * 拡張機能の XML を生成します。
+ */
+function generateExtensionsXml(extensionsConfig: any): string {
+    if (!extensionsConfig) return '';
+    
+    let xml = '      <Extensions>\n';
+    
+    // File Associations
+    if (extensionsConfig.fileAssociations) {
+        for (const assoc of extensionsConfig.fileAssociations) {
+            xml += `        <uap:Extension Category="windows.fileTypeAssociation">\n`;
+            xml += `          <uap:FileTypeAssociation Name="${assoc.name}">\n`;
+            for (const ext of assoc.extensions) {
+                xml += `            <uap:FileType>${ext}</uap:FileType>\n`;
+            }
+            xml += `          </uap:FileTypeAssociation>\n`;
+            xml += `        </uap:Extension>\n`;
+        }
+    }
+
+    // Protocols
+    if (extensionsConfig.protocols) {
+        for (const proto of extensionsConfig.protocols) {
+            xml += `        <uap:Extension Category="windows.protocol">\n`;
+            xml += `          <uap:Protocol Name="${proto.name}">\n`;
+            xml += `            <uap:DisplayName>${proto.name} Protocol</uap:DisplayName>\n`;
+            xml += `          </uap:Protocol>\n`;
+            xml += `        </uap:Extension>\n`;
+        }
+    }
+
+    xml += '      </Extensions>';
+    return xml;
+}
+
+/**
+ * 権限の XML を生成します。
+ */
+function generateCapabilitiesXml(capabilities?: string[]): string {
+    if (!capabilities) return '';
+    return capabilities.map(cap => `    <Capability Name="${cap}" />`).join('\n');
+}
+
+/**
+ * MSIX に必要なアセット類（ロゴ等）を準備します。
+ * 不足している場合はダミーを生成します。
+ */
+async function ensureAssets(config: ElectrobunConfig, buildDir: string): Promise<void> {
     const assetsDir = path.join(buildDir, 'Assets');
     if (!fs.existsSync(assetsDir)) {
         fs.mkdirSync(assetsDir, { recursive: true });
     }
 
-    const outputMsix = path.join(outDir, `${appName}_${quadVersion}_x64.msix`);
-    
-    try {
-        console.log(`MSIX パッケージを作成中: ${outputMsix}`);
-        execSync(`makeappx pack /d "${buildDir}" /p "${outputMsix}" /o`, { stdio: 'inherit' });
-        console.log(`MSIX パッケージの作成に成功しました: ${outputMsix}`);
-        return outputMsix;
-    } catch (error) {
-        throw new Error(`MSIX パッケージの作成に失敗しました: ${error instanceof Error ? error.message : String(error)}`);
+    const requiredAssets = [
+        'StoreLogo.png',
+        'Square150x150Logo.png',
+        'Square44x44Logo.png',
+        'Wide310x150Logo.png',
+        'SplashScreen.png'
+    ];
+
+    // TODO: 本来は config.windows.icon からリサイズして生成するのが理想
+    // 現状は存在チェックのみ行い、なければ空のファイル（またはデフォルト）を配置する仕組みを想定
+    for (const asset of requiredAssets) {
+        const assetPath = path.join(assetsDir, asset);
+        if (!fs.existsSync(assetPath)) {
+            // 仮の1x1透明PNGデータ
+            const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
+            fs.writeFileSync(assetPath, transparentPng);
+            console.warn(`Warning: ${asset} not found. Using placeholder. Please provide real assets for production.`);
+        }
     }
 }

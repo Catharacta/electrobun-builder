@@ -7,7 +7,20 @@ const config: ElectrobunConfig = {
   windows: {
     icon: "assets/app.ico",
     productId: "com.example.electrobun",
-    installDir: "MyApp"
+    installDir: "MyApp",
+    msix: {
+      publisher: "CN=TestPublisher",
+      publisherDisplayName: "Test Publisher Display Name",
+      capabilities: ["internetClient"],
+      extensions: {
+        fileAssociations: [
+          { name: "ElectrobunDoc", extensions: [".ebun", ".electrobun"] }
+        ],
+        protocols: [
+          { name: "electrobun-app" }
+        ]
+      }
+    }
   },
   views: {
     mainview: {

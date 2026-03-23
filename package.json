@@ -1,19 +1,43 @@
 {
-  "name": "electrobun-builder",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "@catharacta/electrobun-builder",
+  "version": "0.1.0",
+  "description": "Packaging and signing tool for Electrobun applications on Windows (NSIS, WiX, MSIX).",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "electrobun-builder": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "templates",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "electrobun",
+    "builder",
+    "windows",
+    "installer",
+    "nsis",
+    "wix",
+    "msix"
+  ],
+  "author": "Electrobun Team",
+  "license": "MIT",
   "packageManager": "pnpm@10.30.3",
+  "dependencies": {
+    "rcedit": "^5.0.2"
+  },
   "devDependencies": {
     "@types/node": "^25.5.0",
     "bun-types": "^1.3.11",
-    "rcedit": "^5.0.2",
     "typescript": "^5.9.3"
   }
 }

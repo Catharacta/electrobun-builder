@@ -1,0 +1,17 @@
+# Build artifacts
+dist/msix_tmp/
+dist/*.log
+
+# Configuration
+electrobun.config.ts
+
+# Source
+src/
+
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+
+# OS specific
+.DS_Store
+Thumbs.db
