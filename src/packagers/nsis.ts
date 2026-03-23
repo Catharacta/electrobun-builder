@@ -19,6 +19,7 @@ export async function buildNSIS(config: ElectrobunConfig, options: NSISOptions):
     "{{PRODUCT_ID}}": config.windows?.productId || config.name,
     "{{EXE_NAME}}": `${config.name}.exe`,
     "{{INSTALL_DIR}}": config.windows?.installDir || config.name,
+    "{{BUILD_SOURCE_DIR}}": join(options.projectRoot, "build", "stable-win-x64"),
   };
 
   for (const [key, value] of Object.entries(replacements)) {

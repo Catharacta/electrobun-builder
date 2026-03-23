@@ -15,7 +15,7 @@ Page instfiles
 
 Section "Install"
   SetOutPath "$INSTDIR"
-  File /r "build\*.*"
+  File /r "{{BUILD_SOURCE_DIR}}\*.*"
   
   WriteUninstaller "$INSTDIR\uninstall.exe"
   CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${EXE_NAME}"

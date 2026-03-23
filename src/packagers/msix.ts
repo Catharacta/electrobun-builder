@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
+import sharp from 'sharp';
 import { ElectrobunConfig } from '../config';
 
 /**
@@ -123,7 +124,7 @@ function generateCapabilitiesXml(capabilities?: string[]): string {
 
 /**
  * MSIX に必要なアセット類（ロゴ等）を準備します。
- * 不足している場合はダミーを生成します。
+ * config.windows.icon から各サイズを自動生成します。
  */
 async function ensureAssets(config: ElectrobunConfig, buildDir: string): Promise<void> {
     const assetsDir = path.join(buildDir, 'Assets');
@@ -131,23 +132,35 @@ async function ensureAssets(config: ElectrobunConfig, buildDir: string): Promise
         fs.mkdirSync(assetsDir, { recursive: true });
     }
 
-    const requiredAssets = [
-        'StoreLogo.png',
-        'Square150x150Logo.png',
-        'Square44x44Logo.png',
-        'Wide310x150Logo.png',
-        'SplashScreen.png'
+    const iconPath = config.windows?.icon ? path.resolve(process.cwd(), config.windows.icon) : null;
+    
+    const assetsToGenerate = [
+        { name: 'StoreLogo.png', size: 50 },
+        { name: 'Square150x150Logo.png', size: 150 },
+        { name: 'Square44x44Logo.png', size: 44 },
+        { name: 'Wide310x150Logo.png', size: [310, 150] },
+        { name: 'SplashScreen.png', size: [620, 300] }
     ];
 
-    // TODO: 本来は config.windows.icon からリサイズして生成するのが理想
-    // 現状は存在チェックのみ行い、なければ空のファイル（またはデフォルト）を配置する仕組みを想定
-    for (const asset of requiredAssets) {
-        const assetPath = path.join(assetsDir, asset);
-        if (!fs.existsSync(assetPath)) {
-            // 仮の1x1透明PNGデータ
-            const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
-            fs.writeFileSync(assetPath, transparentPng);
-            console.warn(`Warning: ${asset} not found. Using placeholder. Please provide real assets for production.`);
+    for (const asset of assetsToGenerate) {
+        const assetPath = path.join(assetsDir, asset.name);
+        
+        if (iconPath && fs.existsSync(iconPath)) {
+            try {
+                const s = sharp(iconPath);
+                if (Array.isArray(asset.size)) {
+                    await s.resize(asset.size[0], asset.size[1], { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).toFile(assetPath);
+                } else {
+                    await s.resize(asset.size, asset.size).toFile(assetPath);
+                }
+                continue;
+            } catch (err) {
+                console.warn(`Warning: Failed to resize ${asset.name} from ${iconPath}: ${err}. Using placeholder.`);
+            }
         }
+
+        // プレースホルダー（フォールバック）
+        const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
+        fs.writeFileSync(assetPath, transparentPng);
     }
 }

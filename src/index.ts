@@ -47,6 +47,16 @@ async function main() {
 
       let outputPath = "";
 
+      // EXE リソース（アイコン/バージョン情報）の更新
+      const exePath = join(projectRoot, "build", "stable-win-x64", `${config.name}.exe`);
+      if (existsSync(exePath)) {
+        console.log(`EXE リソースを更新中...: ${exePath}`);
+        const resourceOptions = getResourceOptionsFromConfig(config);
+        await updateExeResource(exePath, resourceOptions);
+      } else {
+        console.warn(`警告: EXE が見つかりません (期待されるパス: ${exePath})。リソース更新をスキップします。`);
+      }
+
       if (target === "nsis") {
         console.log("NSIS インストーラーをビルド中...");
         outputPath = await buildNSIS(config, { projectRoot, outputName: `${config.name}-setup.exe` });

@@ -4,12 +4,12 @@ Packaging and signing tool for Electrobun applications on Windows. Support for N
 
 ## Features
 
-- **NSIS**: Create single-file EXE installers.
-- **WiX**: Create professional MSI installers.
-- **MSIX**: Create modern Windows App packages with sparse manifests.
-- **Code Signing**: Sign your installers and app binaries with PFX certificates.
-- **Auto-Update**: Generate `latest.json` metadata for Electrobun auto-updater.
-- **Resource Editing**: Automatically update EXE icons and version information using `rcedit`.
+- **NSIS**: 単一ファイルの EXE インストーラーを作成します。
+- **WiX**: プロフェッショナルな MSI インストーラーを作成します。ビルドディレクトリを自動スキャンしてコンポーネントを生成し、`uuid` による安定したアップグレードコードを付与します。
+- **MSIX**: `sharp` によるロゴの自動リサイズ機能付きで、モダンな Windows アプリパッケージ（Sparse Manifest 形式）を作成します。
+- **コード署名**: PFX 証明書を使用して、インストーラーとアプリバイナリにデジタル署名を付与します。
+- **自動更新**: Electrobun のオートアップデーター用 `latest.json` メタデータを生成します。
+- **リソース編集**: `rcedit` を使用して、EXE のアイコンやバージョン情報をプロジェクト設定から自動的に更新します。
 
 ## Installation
 

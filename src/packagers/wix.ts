@@ -1,7 +1,10 @@
-import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 import { spawn } from "node:child_process";
+import { v5 as uuidv5 } from "uuid";
 import { type ElectrobunConfig } from "../config";
+
+const NAMESPACE = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"; // DNS namespace for stable results
 
 export interface WiXOptions {
   projectRoot: string;
@@ -12,14 +15,22 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
   const templatePath = join(options.projectRoot, "templates", "installer.wxs.template");
   let template = readFileSync(templatePath, "utf-8");
 
+  const buildSourceDir = join(options.projectRoot, "build", "stable-win-x64");
+  const identifier = config.id || `${config.name}.example.com`;
+  const upgradeCode = uuidv5(identifier, NAMESPACE);
+
+  // コンポーネントの動的生成
+  const components = generateWixComponents(buildSourceDir);
+
   // プレースホルダーの置換
   const replacements: Record<string, string> = {
     "{{APP_NAME}}": config.name,
     "{{APP_VERSION}}": config.version,
     "{{COMPANY_NAME}}": config.author || "Default Company",
-    "{{UPGRADE_CODE}}": "12345678-1234-1234-1234-123456789012", // TODO: 固定または生成
+    "{{UPGRADE_CODE}}": upgradeCode,
     "{{INSTALL_DIR}}": config.windows?.installDir || config.name,
     "{{EXE_NAME}}": `${config.name}.exe`,
+    "{{COMPONENTS}}": components,
   };
 
   for (const [key, value] of Object.entries(replacements)) {
@@ -53,4 +64,45 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
       console.error(`WiX Candle Error: ${data}`);
     });
   });
+}
+
+/**
+ * ビルドディレクトリをスキャンして WiX のコンポーネント XML を生成します。
+ */
+function generateWixComponents(sourceDir: string): string {
+  const files: string[] = [];
+  
+  function walk(dir: string) {
+    const list = readdirSync(dir);
+    for (const file of list) {
+      const fullPath = join(dir, file);
+      const stat = statSync(fullPath);
+      if (stat.isDirectory()) {
+        walk(fullPath);
+      } else {
+        files.push(fullPath);
+      }
+    }
+  }
+
+  if (readdirSync(sourceDir).length === 0) {
+    console.warn(`Warning: Source directory is empty: ${sourceDir}`);
+  }
+  walk(sourceDir);
+
+  let xml = '<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">\n';
+  
+  for (const file of files) {
+    const relPath = relative(sourceDir, file);
+    const id = relPath.replace(/[\\/ .&-]/g, "_");
+    // WiX IDs must start with a letter or underscore
+    const idSafe = /^[a-zA-Z_]/.test(id) ? id : `file_${id}`;
+    
+    xml += `            <Component Id="comp_${idSafe}" Guid="*">\n`;
+    xml += `                <File Id="file_${idSafe}" Source="${file}" KeyPath="yes" />\n`;
+    xml += `            </Component>\n`;
+  }
+
+  xml += '        </ComponentGroup>';
+  return xml;
 }

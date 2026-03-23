@@ -16,10 +16,6 @@
             </Directory>
         </Directory>
 
-        <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-            <Component Id="MainExecutable" Guid="*">
-                <File Id="AppExe" Source="build\{{EXE_NAME}}" KeyPath="yes" />
-            </Component>
-        </ComponentGroup>
+        {{COMPONENTS}}
     </Product>
 </Wix>
