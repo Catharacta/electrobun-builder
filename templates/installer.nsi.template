@@ -1,17 +1,24 @@
-# NSIS Installer Template
 !define APP_NAME "{{APP_NAME}}"
 !define APP_VERSION "{{APP_VERSION}}"
 !define PRODUCT_ID "{{PRODUCT_ID}}"
 !define EXE_NAME "{{EXE_NAME}}"
 !define INSTALL_DIR "{{INSTALL_DIR}}"
 
+!include "MUI2.nsh"
+!define MUI_ICON "{{ICON_PATH}}"
+!define MUI_UNICON "{{ICON_PATH}}"
+
 Name "${APP_NAME}"
 OutFile "${EXE_NAME}"
 InstallDir "$PROGRAMFILES64\${INSTALL_DIR}"
+Icon "{{ICON_PATH}}"
+UninstallIcon "{{ICON_PATH}}"
 RequestExecutionLevel admin
 
 Page directory
 Page instfiles
+
+!insertmacro MUI_LANGUAGE "{{LANGUAGE_NAME}}"
 
 Section "Install"
   SetOutPath "$INSTDIR"

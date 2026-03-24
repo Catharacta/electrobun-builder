@@ -31,6 +31,7 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
     "{{INSTALL_DIR}}": config.windows?.installDir || config.name,
     "{{EXE_NAME}}": `${config.name}.exe`,
     "{{COMPONENTS}}": components,
+    "{{LANGUAGE_CODE}}": config.windows?.languageCode || "1041",
   };
 
   for (const [key, value] of Object.entries(replacements)) {
@@ -94,8 +95,9 @@ function generateWixComponents(sourceDir: string): string {
   
   for (const file of files) {
     const relPath = relative(sourceDir, file);
-    const id = relPath.replace(/[\\/ .&-]/g, "_");
-    // WiX IDs must start with a letter or underscore
+    // WiX IDs must be alphanumeric or underscore, and cannot start with a digit.
+    // Replace dots, spaces, hyphens and other special chars with underscores.
+    const id = relPath.replace(/[\\/ .&-]/g, "_").replace(/\./g, "_");
     const idSafe = /^[a-zA-Z_]/.test(id) ? id : `file_${id}`;
     
     xml += `            <Component Id="comp_${idSafe}" Guid="*">\n`;

@@ -19,6 +19,8 @@ export async function buildNSIS(config: ElectrobunConfig, options: NSISOptions):
     "{{PRODUCT_ID}}": config.windows?.productId || config.name,
     "{{EXE_NAME}}": `${config.name}.exe`,
     "{{INSTALL_DIR}}": config.windows?.installDir || config.name,
+    "{{ICON_PATH}}": config.windows?.icon ? require("node:path").resolve(config.windows.icon) : "",
+    "{{LANGUAGE_NAME}}": config.windows?.languageName || "Japanese",
     "{{BUILD_SOURCE_DIR}}": join(options.projectRoot, "build", "stable-win-x64"),
   };
 

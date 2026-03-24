@@ -10,6 +10,8 @@ export interface ElectrobunConfig {
     icon?: string;
     productId?: string;
     installDir?: string;
+    languageCode?: string;
+    languageName?: string;
     msix?: {
       publisher?: string;
       publisherDisplayName?: string;

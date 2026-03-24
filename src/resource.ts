@@ -19,7 +19,8 @@ export async function updateExeResource(exePath: string, options: ResourceOption
   const rceditOptions: any = {};
 
   if (options.icon) {
-    rceditOptions.icon = options.icon;
+    // rcedit requires absolute path for icon in some environments (e.g. CI)
+    rceditOptions.icon = require("node:path").resolve(options.icon);
   }
 
   if (options.version) {
