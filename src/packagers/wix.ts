@@ -99,9 +99,10 @@ function generateWixComponents(sourceDir: string): string {
     // Replace dots, spaces, hyphens and other special chars with underscores.
     const id = relPath.replace(/[\\/ .&-]/g, "_").replace(/\./g, "_");
     const idSafe = /^[a-zA-Z_]/.test(id) ? id : `file_${id}`;
+    const finalId = idSafe.split('.').join('_');
     
-    xml += `            <Component Id="comp_${idSafe}" Guid="*">\n`;
-    xml += `                <File Id="file_${idSafe}" Source="${file}" KeyPath="yes" />\n`;
+    xml += `            <Component Id="comp_${finalId}" Guid="*">\n`;
+    xml += `                <File Id="file_${finalId}" Source="${file}" KeyPath="yes" />\n`;
     xml += `            </Component>\n`;
   }
 

@@ -47,13 +47,16 @@ const DEPS: Record<string, DependencyInfo> = {
  */
 export async function checkDependencies(target: string, sign: boolean): Promise<void> {
     const required: string[] = [];
+    const missing: DependencyInfo[] = [];
 
     if (target === 'nsis') required.push('makensis');
-    if (target === 'wix') required.push('wix'); // WiX v4+ assumed, or custom check for candle/light
+    if (target === 'wix') {
+        if (!isBinaryInPath('wix') && (!isBinaryInPath('candle') || !isBinaryInPath('light'))) {
+            missing.push(DEPS['wix']);
+        }
+    }
     if (target === 'msix') required.push('makeappx');
     if (sign) required.push('signtool');
-
-    const missing: DependencyInfo[] = [];
 
     for (const bin of required) {
         if (!isBinaryInPath(bin)) {
