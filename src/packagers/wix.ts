@@ -23,8 +23,8 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
   const identifier = config.id || `${config.name}.example.com`;
   const upgradeCode = uuidv5(identifier, NAMESPACE);
 
-  // コンポーネントの動的生成
-  const components = generateWixComponents(buildSourceDir);
+  // コンポーネントの動的生成 (再帰構造)
+  const { structure, refs } = generateWixComponents(buildSourceDir);
 
   // プレースホルダーの置換
   const replacements: Record<string, string> = {
@@ -34,7 +34,8 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
     "{{UPGRADE_CODE}}": upgradeCode,
     "{{INSTALL_DIR}}": config.windows?.installDir || config.name,
     "{{EXE_NAME}}": `${config.name}.exe`,
-    "{{COMPONENTS}}": components,
+    "{{DIRECTORY_STRUCTURE}}": structure,
+    "{{COMPONENT_REFS}}": refs,
     "{{LANGUAGE_CODE}}": config.windows?.languageCode || "1041",
   };
 
@@ -47,7 +48,6 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
 
   return new Promise((resolve, reject) => {
     // WiX v3 の場合: candle -> light
-    // ここでは単純化のため candle のみを呼び出すか、スクリプト化する
     const candle = spawn("candle", ["-out", join(options.projectRoot, "dist", "installer.wixobj"), wxsPath]);
 
     candle.on("close", (code) => {
@@ -73,20 +73,36 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
 
 /**
  * ビルドディレクトリをスキャンして WiX のコンポーネント XML を生成します。
+ * ディレクトリ構造を維持するために再帰的に処理します。
  */
-function generateWixComponents(sourceDir: string): string {
-  const allFiles: string[] = [];
-  
-  function walk(dir: string) {
-    if (!existsSync(dir)) return;
-    const list = readdirSync(dir);
-    for (const file of list) {
-      const fullPath = join(dir, file);
+function generateWixComponents(sourceDir: string): { structure: string; refs: string } {
+  let structureXml = "";
+  let refsXml = "";
+
+  function processDirectory(currentDir: string, indent: string = "            "): void {
+    if (!existsSync(currentDir)) return;
+    const items = readdirSync(currentDir);
+    
+    for (const item of items) {
+      const fullPath = join(currentDir, item);
       const stat = statSync(fullPath);
+      
       if (stat.isDirectory()) {
-        walk(fullPath);
+        const relPath = relative(sourceDir, fullPath);
+        const hash = createHash('sha1').update(relPath).digest('hex').substring(0, 8);
+        structureXml += `${indent}<Directory Id="dir_${hash}" Name="${item}">\n`;
+        processDirectory(fullPath, indent + "    ");
+        structureXml += `${indent}</Directory>\n`;
       } else {
-        allFiles.push(fullPath);
+        const relPath = relative(sourceDir, fullPath);
+        const hash = createHash('sha1').update(relPath).digest('hex').substring(0, 8);
+        const finalId = `f${hash}`;
+        
+        structureXml += `${indent}<Component Id="comp_${finalId}" Guid="*" Win64="yes">\n`;
+        structureXml += `${indent}    <File Id="file_${finalId}" Source="${fullPath}" KeyPath="yes" />\n`;
+        structureXml += `${indent}</Component>\n`;
+        
+        refsXml += `            <ComponentRef Id="comp_${finalId}" />\n`;
       }
     }
   }
@@ -94,24 +110,9 @@ function generateWixComponents(sourceDir: string): string {
   // もし sourceDir が存在しない、または空なら警告
   if (!existsSync(sourceDir) || readdirSync(sourceDir).length === 0) {
     console.warn(`Warning: Source directory is empty or missing: ${sourceDir}`);
-    return '<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER" />';
-  }
-  walk(sourceDir);
-
-  let xml = '<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">\n';
-  
-  for (const file of allFiles) {
-    const relPath = relative(sourceDir, file);
-    // WiX ID に使えない記号をハッシュで代替
-    const hash = createHash('sha1').update(relPath).digest('hex').substring(0, 8);
-    const finalId = `f${hash}`; 
-    
-    // サブディレクトリの解決 (Name 属性を使うことで INSTALLFOLDER 配下に階層を維持して配置)
-    xml += `            <Component Id="comp_${finalId}" Guid="*">\n`;
-    xml += `                <File Id="file_${finalId}" Source="${file}" Name="${relPath}" KeyPath="yes" />\n`;
-    xml += `            </Component>\n`;
+    return { structure: "", refs: "" };
   }
 
-  xml += '        </ComponentGroup>';
-  return xml;
+  processDirectory(sourceDir);
+  return { structure: structureXml, refs: refsXml };
 }

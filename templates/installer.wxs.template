@@ -16,6 +16,12 @@
             </Directory>
         </Directory>
 
-        {{COMPONENTS}}
+        <DirectoryRef Id="INSTALLFOLDER">
+            {{DIRECTORY_STRUCTURE}}
+        </DirectoryRef>
+
+        <ComponentGroup Id="ProductComponents">
+            {{COMPONENT_REFS}}
+        </ComponentGroup>
     </Product>
 </Wix>
