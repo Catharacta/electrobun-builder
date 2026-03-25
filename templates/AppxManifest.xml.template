@@ -21,7 +21,7 @@
   </Dependencies>
 
   <Resources>
-    <Resource Language="en-us" />
+    <Resource Language="{{LANGUAGE_TAG}}" />
   </Resources>
 
   <Applications>

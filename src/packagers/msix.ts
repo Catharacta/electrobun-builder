@@ -70,6 +70,11 @@ function generateManifest(config: ElectrobunConfig, identifier: string, version:
         .replace(/{{DESCRIPTION}}/g, description)
         .replace(/{{EXECUTABLE_NAME}}/g, executableName);
 
+    // 言語タグの置換
+    const languageCode = config.windows?.languageCode || "1041";
+    const languageTag = languageCode === "1041" ? "ja-JP" : "en-US";
+    manifest = manifest.replace(/{{LANGUAGE_TAG}}/g, languageTag);
+
     // Extensions の生成
     const extensions = generateExtensionsXml(msixConfig?.extensions);
     manifest = manifest.replace(/{{EXTENSIONS}}/g, extensions);

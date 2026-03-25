@@ -27,6 +27,9 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
   const { structure, refs } = generateWixComponents(buildSourceDir);
 
   // プレースホルダーの置換
+  const languageCode = config.windows?.languageCode || "1041";
+  const codepage = languageCode === "1041" ? "932" : "1252";
+
   const replacements: Record<string, string> = {
     "{{APP_NAME}}": config.name,
     "{{APP_VERSION}}": config.version,
@@ -36,8 +39,8 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
     "{{EXE_NAME}}": `${config.name}.exe`,
     "{{DIRECTORY_STRUCTURE}}": structure,
     "{{COMPONENT_REFS}}": refs,
-    "{{LANGUAGE_CODE}}": config.windows?.languageCode || "1041",
-    "{{CODEPAGE}}": config.windows?.languageCode === "1041" ? "932" : "1252",
+    "{{LANGUAGE_CODE}}": languageCode,
+    "{{CODEPAGE}}": codepage,
   };
 
   for (const [key, value] of Object.entries(replacements)) {

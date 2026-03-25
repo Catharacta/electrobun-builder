@@ -20,7 +20,7 @@ export async function buildNSIS(config: ElectrobunConfig, options: NSISOptions):
     "{{EXE_NAME}}": `${config.name}.exe`,
     "{{INSTALL_DIR}}": config.windows?.installDir || config.name,
     "{{ICON_PATH}}": config.windows?.icon ? resolve(process.cwd(), config.windows.icon) : "",
-    "{{LANGUAGE_NAME}}": config.windows?.languageName || "Japanese",
+    "{{LANGUAGE_NAME}}": config.windows?.languageName || (config.windows?.languageCode === "1041" || !config.windows?.languageCode ? "Japanese" : "English"),
     "{{BUILD_SOURCE_DIR}}": (() => {
       const appFolderName = config.windows?.installDir || config.name;
       const subDir = join(options.projectRoot, "build", "stable-win-x64", appFolderName);
