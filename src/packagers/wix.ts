@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -16,7 +16,10 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
   const templatePath = join(options.projectRoot, "templates", "installer.wxs.template");
   let template = readFileSync(templatePath, "utf-8");
 
-  const buildSourceDir = join(options.projectRoot, "build", "stable-win-x64");
+  const appFolderName = config.windows?.installDir || config.name;
+  const buildSourceDirCandidate = join(options.projectRoot, "build", "stable-win-x64", appFolderName);
+  const buildSourceDir = existsSync(buildSourceDirCandidate) ? buildSourceDirCandidate : join(options.projectRoot, "build", "stable-win-x64");
+
   const identifier = config.id || `${config.name}.example.com`;
   const upgradeCode = uuidv5(identifier, NAMESPACE);
 
@@ -72,9 +75,10 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
  * ビルドディレクトリをスキャンして WiX のコンポーネント XML を生成します。
  */
 function generateWixComponents(sourceDir: string): string {
-  const files: string[] = [];
+  const allFiles: string[] = [];
   
   function walk(dir: string) {
+    if (!existsSync(dir)) return;
     const list = readdirSync(dir);
     for (const file of list) {
       const fullPath = join(dir, file);
@@ -82,26 +86,29 @@ function generateWixComponents(sourceDir: string): string {
       if (stat.isDirectory()) {
         walk(fullPath);
       } else {
-        files.push(fullPath);
+        allFiles.push(fullPath);
       }
     }
   }
 
-  if (readdirSync(sourceDir).length === 0) {
-    console.warn(`Warning: Source directory is empty: ${sourceDir}`);
+  // もし sourceDir が存在しない、または空なら警告
+  if (!existsSync(sourceDir) || readdirSync(sourceDir).length === 0) {
+    console.warn(`Warning: Source directory is empty or missing: ${sourceDir}`);
+    return '<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER" />';
   }
   walk(sourceDir);
 
   let xml = '<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">\n';
   
-  for (const file of files) {
+  for (const file of allFiles) {
     const relPath = relative(sourceDir, file);
-    // パスから一意なハッシュ(8桁)を生成して ID 衝突を防ぐ (Error 55 対策)
+    // WiX ID に使えない記号をハッシュで代替
     const hash = createHash('sha1').update(relPath).digest('hex').substring(0, 8);
     const finalId = `f${hash}`; 
     
+    // サブディレクトリの解決 (Name 属性を使うことで INSTALLFOLDER 配下に階層を維持して配置)
     xml += `            <Component Id="comp_${finalId}" Guid="*">\n`;
-    xml += `                <File Id="file_${finalId}" Source="${file}" KeyPath="yes" />\n`;
+    xml += `                <File Id="file_${finalId}" Source="${file}" Name="${relPath}" KeyPath="yes" />\n`;
     xml += `            </Component>\n`;
   }
 

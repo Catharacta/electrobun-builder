@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { type ElectrobunConfig } from "../config";
@@ -21,7 +21,11 @@ export async function buildNSIS(config: ElectrobunConfig, options: NSISOptions):
     "{{INSTALL_DIR}}": config.windows?.installDir || config.name,
     "{{ICON_PATH}}": config.windows?.icon ? resolve(process.cwd(), config.windows.icon) : "",
     "{{LANGUAGE_NAME}}": config.windows?.languageName || "Japanese",
-    "{{BUILD_SOURCE_DIR}}": join(options.projectRoot, "build", "stable-win-x64"),
+    "{{BUILD_SOURCE_DIR}}": (() => {
+      const appFolderName = config.windows?.installDir || config.name;
+      const subDir = join(options.projectRoot, "build", "stable-win-x64", appFolderName);
+      return existsSync(subDir) ? subDir : join(options.projectRoot, "build", "stable-win-x64");
+    })(),
   };
 
   for (const [key, value] of Object.entries(replacements)) {

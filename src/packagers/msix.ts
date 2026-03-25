@@ -18,6 +18,9 @@ export async function packMsix(config: ElectrobunConfig, buildDir: string, outDi
 
     // 1. Assets の準備
     await ensureAssets(config, buildDir);
+    
+    // 1.5. アプリケーションファイルのコピー
+    copyAppFiles(config, buildDir, path.join(path.dirname(buildDir), '..'));
 
     // 2. マニフェストの生成
     const manifest = generateManifest(config, identifier, quadVersion);
@@ -163,4 +166,36 @@ async function ensureAssets(config: ElectrobunConfig, buildDir: string): Promise
         const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
         fs.writeFileSync(assetPath, transparentPng);
     }
+}
+
+/**
+ * アプリケーションファイルを MSIX 用のディレクトリにコピーします
+ */
+function copyAppFiles(config: ElectrobunConfig, buildDir: string, projectRoot: string): void {
+    const appFolderName = config.windows?.installDir || config.name;
+    const sourceDirCandidate = path.join(projectRoot, "build", "stable-win-x64", appFolderName);
+    const sourceDir = fs.existsSync(sourceDirCandidate) ? sourceDirCandidate : path.join(projectRoot, "build", "stable-win-x64");
+
+    console.log(`Copying app files from ${sourceDir} to ${buildDir}`);
+    
+    // シンプルな再帰コピー
+    function copyRecursive(src: string, dest: string) {
+        if (!fs.existsSync(src)) return;
+        const stat = fs.statSync(src);
+        if (stat.isDirectory()) {
+            if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+            fs.readdirSync(src).forEach(child => {
+                copyRecursive(path.join(src, child), path.join(dest, child));
+            });
+        } else {
+            // Assets フォルダやマニフェストは既に生成されている可能性があるので上書き注意
+            // (通常はサブフォルダに分かれているので問題ないはず)
+            if (path.basename(dest) === 'AppxManifest.xml' || dest.includes(`${path.sep}Assets${path.sep}`)) {
+                return;
+            }
+            fs.copyFileSync(src, dest);
+        }
+    }
+
+    copyRecursive(sourceDir, buildDir);
 }

@@ -6,7 +6,7 @@ import { signFile } from "./sign";
 import { generateUpdateMetadata } from "./update";
 import { updateExeResource, getResourceOptionsFromConfig } from "./resource";
 import { checkDependencies } from "./utils/deps";
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 async function main() {
@@ -48,13 +48,17 @@ async function main() {
       let outputPath = "";
 
       // EXE リソース（アイコン/バージョン情報）の更新
-      const exePath = join(projectRoot, "build", "stable-win-x64", `${config.name}.exe`);
-      if (existsSync(exePath)) {
+      const appFolderName = config.windows?.installDir || config.name;
+      const exeCandidate1 = join(projectRoot, "build", "stable-win-x64", `${config.name}.exe`);
+      const exeCandidate2 = join(projectRoot, "build", "stable-win-x64", appFolderName, `${config.name}.exe`);
+      const exePath = existsSync(exeCandidate2) ? exeCandidate2 : exeCandidate1;
+
+      if (existsSync(exePath) && !statSync(exePath).isDirectory()) {
         console.log(`EXE リソースを更新中...: ${exePath}`);
         const resourceOptions = getResourceOptionsFromConfig(config);
         await updateExeResource(exePath, resourceOptions);
       } else {
-        console.warn(`警告: EXE が見つかりません (期待されるパス: ${exePath})。リソース更新をスキップします。`);
+        console.warn(`警告: EXE が見つかりません (期待されるパス: ${exeCandidate1} または ${exeCandidate2})。リソース更新をスキップします。`);
       }
 
       if (target === "nsis") {
