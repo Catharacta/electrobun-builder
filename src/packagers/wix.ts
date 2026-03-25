@@ -37,6 +37,7 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
     "{{DIRECTORY_STRUCTURE}}": structure,
     "{{COMPONENT_REFS}}": refs,
     "{{LANGUAGE_CODE}}": config.windows?.languageCode || "1041",
+    "{{CODEPAGE}}": config.windows?.languageCode === "1041" ? "932" : "1252",
   };
 
   for (const [key, value] of Object.entries(replacements)) {
