@@ -54,6 +54,10 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
       if (code === 0) {
         const light = spawn("light", ["-out", join(options.projectRoot, "dist", `${config.name}.msi`), join(options.projectRoot, "dist", "installer.wixobj")]);
         
+        light.stdout.on("data", (data) => {
+          console.log(`WiX Light: ${data}`);
+        });
+
         light.stderr.on("data", (data) => {
           console.error(`WiX Light Error: ${data}`);
         });
@@ -62,7 +66,7 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
           if (lCode === 0) {
             resolve(join(options.projectRoot, "dist", `${config.name}.msi`));
           } else {
-            reject(new Error(`light がエラーコード ${lCode} で終了しました。`));
+            reject(new Error(`light がエラーコード ${lCode} で終了しました。詳細は WiX Light Error ログを確認してください。`));
           }
         });
       } else {
@@ -83,6 +87,7 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
 function generateWixComponents(sourceDir: string): { structure: string; refs: string } {
   let structureXml = "";
   let refsXml = "";
+  const usedIds = new Map<string, string>(); // ID -> Path のチェック用マップ
 
   function processDirectory(currentDir: string, indent: string = "                    "): void {
     if (!existsSync(currentDir)) return;
@@ -92,29 +97,48 @@ function generateWixComponents(sourceDir: string): { structure: string; refs: st
       const fullPath = join(currentDir, item);
       const stat = statSync(fullPath);
       
-      const relPath = relative(sourceDir, fullPath);
-      const hash = createHash('sha1').update(relPath).digest('hex').substring(0, 8);
+      // パスの正規化 (バックスラッシュをスラッシュに統一)
+      const relPath = relative(sourceDir, fullPath).replace(/\\/g, "/");
+      
+      // ハッシュ長を 40文字 (SHA1全文字) に延長
+      const hash = createHash("sha1").update(relPath).digest("hex");
       const finalId = `f${hash}`;
 
       if (stat.isDirectory()) {
+        const dirId = `dir_${hash}`;
+        // 重複チェック
+        if (usedIds.has(dirId)) {
+          throw new Error(`Duplicate ID detected for directory: ${dirId}\nExisting: ${usedIds.get(dirId)}\nNew: ${relPath}`);
+        }
+        usedIds.set(dirId, relPath);
+
         // Directory 構造のみ出力（Component は含めない）
-        structureXml += `${indent}<Directory Id="dir_${hash}" Name="${item}">\n`;
+        structureXml += `${indent}<Directory Id="${dirId}" Name="${item}">\n`;
         processDirectory(fullPath, indent + "    ");
         structureXml += `${indent}</Directory>\n`;
       } else {
+        const componentId = `comp_${finalId}`;
+        const fileId = `file_${finalId}`;
+
+        // 重複チェック
+        if (usedIds.has(componentId)) {
+          throw new Error(`Duplicate ID detected for component: ${componentId}\nExisting: ${usedIds.get(componentId)}\nNew: ${relPath}`);
+        }
+        usedIds.set(componentId, relPath);
+
         // Component の親 Directory ID を特定
-        const parentRelPath = relative(sourceDir, currentDir);
+        const parentRelPath = relative(sourceDir, currentDir).replace(/\\/g, "/");
         let directoryId: string;
         if (parentRelPath === "" || parentRelPath === ".") {
           directoryId = "INSTALLFOLDER";
         } else {
-          const parentHash = createHash('sha1').update(parentRelPath).digest('hex').substring(0, 8);
+          const parentHash = createHash("sha1").update(parentRelPath).digest("hex");
           directoryId = `dir_${parentHash}`;
         }
 
         // Component は ComponentGroup 内に Directory 属性付きで定義
-        refsXml += `            <Component Id="comp_${finalId}" Directory="${directoryId}" Guid="*" Win64="yes">\n`;
-        refsXml += `                <File Id="file_${finalId}" Source="${fullPath}" KeyPath="yes" />\n`;
+        refsXml += `            <Component Id="${componentId}" Directory="${directoryId}" Guid="*" Win64="yes">\n`;
+        refsXml += `                <File Id="${fileId}" Source="${fullPath}" KeyPath="yes" />\n`;
         refsXml += `            </Component>\n`;
       }
     }
