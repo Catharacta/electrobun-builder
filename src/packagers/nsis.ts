@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { type ElectrobunConfig } from "../config";
 
@@ -19,7 +19,7 @@ export async function buildNSIS(config: ElectrobunConfig, options: NSISOptions):
     "{{PRODUCT_ID}}": config.windows?.productId || config.name,
     "{{EXE_NAME}}": `${config.name}.exe`,
     "{{INSTALL_DIR}}": config.windows?.installDir || config.name,
-    "{{ICON_PATH}}": config.windows?.icon ? require("node:path").resolve(config.windows.icon) : "",
+    "{{ICON_PATH}}": config.windows?.icon ? resolve(process.cwd(), config.windows.icon) : "",
     "{{LANGUAGE_NAME}}": config.windows?.languageName || "Japanese",
     "{{BUILD_SOURCE_DIR}}": join(options.projectRoot, "build", "stable-win-x64"),
   };

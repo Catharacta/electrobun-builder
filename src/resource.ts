@@ -1,3 +1,4 @@
+import path from "node:path";
 import { rcedit } from "rcedit";
 import { type ElectrobunConfig } from "./config";
 
@@ -20,7 +21,7 @@ export async function updateExeResource(exePath: string, options: ResourceOption
 
   if (options.icon) {
     // rcedit requires absolute path for icon in some environments (e.g. CI)
-    rceditOptions.icon = require("node:path").resolve(options.icon);
+    rceditOptions.icon = path.resolve(process.cwd(), options.icon);
   }
 
   if (options.version) {

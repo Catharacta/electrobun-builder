@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { v5 as uuidv5 } from "uuid";
 import { type ElectrobunConfig } from "../config";
 
@@ -95,11 +96,9 @@ function generateWixComponents(sourceDir: string): string {
   
   for (const file of files) {
     const relPath = relative(sourceDir, file);
-    // WiX IDs must be alphanumeric or underscore, and cannot start with a digit.
-    // Replace dots, spaces, hyphens and other special chars with underscores.
-    const id = relPath.replace(/[\\/ .&-]/g, "_").replace(/\./g, "_");
-    const idSafe = /^[a-zA-Z_]/.test(id) ? id : `file_${id}`;
-    const finalId = idSafe.split('.').join('_');
+    // パスから一意なハッシュ(8桁)を生成して ID 衝突を防ぐ (Error 55 対策)
+    const hash = createHash('sha1').update(relPath).digest('hex').substring(0, 8);
+    const finalId = `f${hash}`; 
     
     xml += `            <Component Id="comp_${finalId}" Guid="*">\n`;
     xml += `                <File Id="file_${finalId}" Source="${file}" KeyPath="yes" />\n`;
