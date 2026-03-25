@@ -41,6 +41,7 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
     "{{COMPONENT_REFS}}": refs,
     "{{LANGUAGE_CODE}}": languageCode,
     "{{CODEPAGE}}": codepage,
+    "{{PLATFORM}}": "x64",
   };
 
   for (const [key, value] of Object.entries(replacements)) {
