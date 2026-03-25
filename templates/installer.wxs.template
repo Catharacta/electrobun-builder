@@ -6,19 +6,17 @@
         <MajorUpgrade DowngradeErrorMessage="新しいバージョンの {{APP_NAME}} が既にインストールされています。" />
         <MediaTemplate EmbedCab="yes" />
 
-        <Feature Id="ProductFeature" Title="{{APP_NAME}}" Level="1">
-            <ComponentGroupRef Id="ProductComponents" />
-        </Feature>
-
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="ProgramFiles64Folder">
-                <Directory Id="INSTALLFOLDER" Name="{{INSTALL_DIR}}" />
+                <Directory Id="INSTALLFOLDER" Name="{{INSTALL_DIR}}">
+                    {{DIRECTORY_STRUCTURE}}
+                </Directory>
             </Directory>
         </Directory>
 
-        <DirectoryRef Id="INSTALLFOLDER">
-            {{DIRECTORY_STRUCTURE}}
-        </DirectoryRef>
+        <Feature Id="ProductFeature" Title="{{APP_NAME}}" Level="1">
+            <ComponentGroupRef Id="ProductComponents" />
+        </Feature>
 
         <ComponentGroup Id="ProductComponents">
             {{COMPONENT_REFS}}

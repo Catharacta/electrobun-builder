@@ -53,6 +53,11 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
     candle.on("close", (code) => {
       if (code === 0) {
         const light = spawn("light", ["-out", join(options.projectRoot, "dist", `${config.name}.msi`), join(options.projectRoot, "dist", "installer.wixobj")]);
+        
+        light.stderr.on("data", (data) => {
+          console.error(`WiX Light Error: ${data}`);
+        });
+
         light.on("close", (lCode) => {
           if (lCode === 0) {
             resolve(join(options.projectRoot, "dist", `${config.name}.msi`));
@@ -79,7 +84,7 @@ function generateWixComponents(sourceDir: string): { structure: string; refs: st
   let structureXml = "";
   let refsXml = "";
 
-  function processDirectory(currentDir: string, indent: string = "            "): void {
+  function processDirectory(currentDir: string, indent: string = "                    "): void {
     if (!existsSync(currentDir)) return;
     const items = readdirSync(currentDir);
     
@@ -87,22 +92,30 @@ function generateWixComponents(sourceDir: string): { structure: string; refs: st
       const fullPath = join(currentDir, item);
       const stat = statSync(fullPath);
       
+      const relPath = relative(sourceDir, fullPath);
+      const hash = createHash('sha1').update(relPath).digest('hex').substring(0, 8);
+      const finalId = `f${hash}`;
+
       if (stat.isDirectory()) {
-        const relPath = relative(sourceDir, fullPath);
-        const hash = createHash('sha1').update(relPath).digest('hex').substring(0, 8);
+        // Directory 構造のみ出力（Component は含めない）
         structureXml += `${indent}<Directory Id="dir_${hash}" Name="${item}">\n`;
         processDirectory(fullPath, indent + "    ");
         structureXml += `${indent}</Directory>\n`;
       } else {
-        const relPath = relative(sourceDir, fullPath);
-        const hash = createHash('sha1').update(relPath).digest('hex').substring(0, 8);
-        const finalId = `f${hash}`;
-        
-        structureXml += `${indent}<Component Id="comp_${finalId}" Guid="*" Win64="yes">\n`;
-        structureXml += `${indent}    <File Id="file_${finalId}" Source="${fullPath}" KeyPath="yes" />\n`;
-        structureXml += `${indent}</Component>\n`;
-        
-        refsXml += `            <ComponentRef Id="comp_${finalId}" />\n`;
+        // Component の親 Directory ID を特定
+        const parentRelPath = relative(sourceDir, currentDir);
+        let directoryId: string;
+        if (parentRelPath === "" || parentRelPath === ".") {
+          directoryId = "INSTALLFOLDER";
+        } else {
+          const parentHash = createHash('sha1').update(parentRelPath).digest('hex').substring(0, 8);
+          directoryId = `dir_${parentHash}`;
+        }
+
+        // Component は ComponentGroup 内に Directory 属性付きで定義
+        refsXml += `            <Component Id="comp_${finalId}" Directory="${directoryId}" Guid="*" Win64="yes">\n`;
+        refsXml += `                <File Id="file_${finalId}" Source="${fullPath}" KeyPath="yes" />\n`;
+        refsXml += `            </Component>\n`;
       }
     }
   }
