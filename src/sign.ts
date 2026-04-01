@@ -1,6 +1,5 @@
 import { execSync } from 'child_process';
-import path from 'path';
-import fs from 'fs';
+import fs from 'node:fs';
 
 export interface SignOptions {
     pfxPath: string;
@@ -11,7 +10,6 @@ export interface SignOptions {
 
 /**
  * Windows SDK の signtool.exe を使用してファイルを署名します。
- * 環境パスに signtool.exe が含まれている必要があります。
  */
 export async function signFile(filePath: string, options: SignOptions): Promise<void> {
     if (!fs.existsSync(filePath)) {
@@ -25,7 +23,10 @@ export async function signFile(filePath: string, options: SignOptions): Promise<
     const digest = options.digestAlgorithm || 'SHA256';
     const timestamp = options.timestampUrl || 'http://timestamp.digicert.com';
 
-    let command = `signtool sign /f "${options.pfxPath}"`;
+    const { isBinaryInPath } = await import("./utils/deps");
+    const signtoolPath = isBinaryInPath("signtool") || "signtool";
+
+    let command = `"${signtoolPath}" sign /f "${options.pfxPath}"`;
     
     if (options.password) {
         command += ` /p "${options.password}"`;
@@ -45,9 +46,11 @@ export async function signFile(filePath: string, options: SignOptions): Promise<
 /**
  * 署名の検証を行います。
  */
-export function verifySignature(filePath: string): boolean {
+export async function verifySignature(filePath: string): Promise<boolean> {
     try {
-        execSync(`signtool verify /pa /v "${filePath}"`, { stdio: 'ignore' });
+        const { isBinaryInPath } = await import("./utils/deps");
+        const signtoolPath = isBinaryInPath("signtool") || "signtool";
+        execSync(`"${signtoolPath}" verify /pa /v "${filePath}"`, { stdio: 'ignore' });
         return true;
     } catch {
         return false;

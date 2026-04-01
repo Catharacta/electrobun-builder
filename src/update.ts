@@ -1,6 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
 
 export interface UpdateMetadata {
     version: string;

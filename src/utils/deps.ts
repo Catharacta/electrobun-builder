@@ -1,16 +1,53 @@
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 
 /**
- * PATH に指定されたバイナリが存在するか確認します。
+ * PATH に指定されたバイナリが存在するか、または標準的なインストールパスを確認します。
  */
-export function isBinaryInPath(binaryName: string): boolean {
+export function isBinaryInPath(binaryName: string): string | null {
     try {
-        // Windows では 'where' コマンドを使用
-        execSync(`where ${binaryName}`, { stdio: 'ignore' });
-        return true;
+        // 1. まずは通常の PATH から検索
+        const whereOutput = execSync(`where ${binaryName}`, { stdio: 'pipe' }).toString().trim();
+        if (whereOutput) {
+            // 複数行返ってくる場合があるため、最初の1行を選択
+            return whereOutput.split('\n')[0].trim();
+        }
     } catch {
-        return false;
+        // ignore error and try standard paths
     }
+
+    // 2. 標準的なインストールパスを検索 (Windows)
+    const standardPaths: Record<string, string[]> = {
+        makensis: [
+            "C:\\Program Files (x86)\\NSIS\\makensis.exe",
+            "C:\\Program Files\\NSIS\\makensis.exe"
+        ],
+        candle: [
+            "C:\\Program Files (x86)\\WiX Toolset v3.14\\bin\\candle.exe",
+            "C:\\Program Files (x86)\\WiX Toolset v3.11\\bin\\candle.exe",
+            "C:\\Program Files (x86)\\WiX Toolset v3.10\\bin\\candle.exe"
+        ],
+        light: [
+            "C:\\Program Files (x86)\\WiX Toolset v3.14\\bin\\light.exe",
+            "C:\\Program Files (x86)\\WiX Toolset v3.11\\bin\\light.exe",
+            "C:\\Program Files (x86)\\WiX Toolset v3.10\\bin\\light.exe"
+        ],
+        signtool: [
+            "C:\\Program Files (x86)\\Windows Kits\\10\\bin\\x64\\signtool.exe",
+            "C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x64\\signtool.exe"
+        ]
+    };
+
+    const paths = standardPaths[binaryName];
+    if (paths) {
+        for (const p of paths) {
+            if (existsSync(p)) {
+                return p;
+            }
+        }
+    }
+
+    return null;
 }
 
 export interface DependencyInfo {

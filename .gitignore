@@ -25,6 +25,15 @@ bun-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+*.log
+*.tmp
+
+# IDEs
+.vscode/
+.idea/
+
+# Local testing
+test-app/
 
 # Windows-specific
 *.exe

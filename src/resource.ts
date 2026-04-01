@@ -49,26 +49,26 @@ export async function updateExeResource(exePath: string, options: ResourceOption
     rceditOptions["version-string"].LegalCopyright = options.legalCopyright;
   }
 
+  const absoluteExePath = path.resolve(process.cwd(), exePath);
   try {
-    await rcedit(exePath, rceditOptions);
+    await rcedit(absoluteExePath, rceditOptions);
+    console.log(`[SUCCESS] .exe リソースの更新が完了しました: ${path.basename(exePath)}`);
   } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`.exe リソースの更新に失敗しました: ${error.message}`);
-    }
-    throw error;
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`[WARNING] .exe リソースの更新に失敗しましたが、ビルドを続行します: ${message}`);
+    console.warn(`対象ファイル: ${absoluteExePath}`);
   }
 }
 
 /**
  * 設定ファイルからリソースオプションを生成します。
- * @param config Electrobun 設定
  */
 export function getResourceOptionsFromConfig(config: ElectrobunConfig): ResourceOptions {
+  const win = config.build?.win || config.windows;
   return {
-    icon: config.windows?.icon,
+    icon: win?.icon,
     version: config.version,
     productName: config.name,
-    // 必要に応じてデフォルト値を追加
     fileDescription: config.name,
     legalCopyright: `Copyright © ${new Date().getFullYear()} ${config.author || ""}`.trim(),
   };

@@ -6,10 +6,23 @@ export interface ElectrobunConfig {
   version: string;
   author?: string;
   publisher?: string;
+  build?: {
+    bunnyBun?: string;
+    win?: {
+      icon?: string;
+      productId?: string;
+      installDir?: string;
+      useAsar?: boolean;
+      languageCode?: string;
+      languageName?: string;
+    }
+  };
+  // 下位互換性のため維持するか、移行するか
   windows?: {
     icon?: string;
     productId?: string;
     installDir?: string;
+    useAsar?: boolean;
     languageCode?: string;
     languageName?: string;
     msix?: {
