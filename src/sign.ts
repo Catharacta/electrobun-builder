@@ -23,7 +23,7 @@ export async function signFile(filePath: string, options: SignOptions): Promise<
     const digest = options.digestAlgorithm || 'SHA256';
     const timestamp = options.timestampUrl || 'http://timestamp.digicert.com';
 
-    const { isBinaryInPath } = await import("./utils/deps");
+    const { isBinaryInPath } = await import("./utils/deps.js");
     const signtoolPath = isBinaryInPath("signtool") || "signtool";
 
     let command = `"${signtoolPath}" sign /f "${options.pfxPath}"`;
@@ -48,7 +48,7 @@ export async function signFile(filePath: string, options: SignOptions): Promise<
  */
 export async function verifySignature(filePath: string): Promise<boolean> {
     try {
-        const { isBinaryInPath } = await import("./utils/deps");
+        const { isBinaryInPath } = await import("./utils/deps.js");
         const signtoolPath = isBinaryInPath("signtool") || "signtool";
         execSync(`"${signtoolPath}" verify /pa /v "${filePath}"`, { stdio: 'ignore' });
         return true;

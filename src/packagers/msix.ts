@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 import sharp from 'sharp';
-import { ElectrobunConfig } from '../config';
+import { ElectrobunConfig } from '../config.js';
 
 /**
  * MSIX パッケージを生成します。

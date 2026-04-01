@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync, existsSync, statSync, readdirSync } from "
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
-import { type ElectrobunConfig } from "../config";
+import { type ElectrobunConfig } from "../config.js";
 
 // ESM での __dirname の代わり (または import.meta.dirname を使用可能ならそちら)
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -75,7 +75,7 @@ export async function buildNSIS(config: ElectrobunConfig, options: NSISOptions):
   // 日本語文字を含むため、UTF-8 BOM 付きで保存して makensis.exe に正しく認識させる
   writeFileSync(nsiPath, "\uFEFF" + template, "utf-8");
 
-  const { isBinaryInPath } = await import("../utils/deps");
+  const { isBinaryInPath } = await import("../utils/deps.js");
   const makensisPath = isBinaryInPath("makensis") || "makensis";
 
   if (options.dryRun) {

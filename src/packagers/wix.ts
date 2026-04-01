@@ -3,7 +3,7 @@ import { join, relative, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import { v5 as uuidv5 } from "uuid";
-import { type ElectrobunConfig } from "../config";
+import { type ElectrobunConfig } from "../config.js";
 import { createHash } from "node:crypto";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -110,7 +110,7 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
   const wxsPath = join(options.projectRoot, "dist", "installer.wxs");
   writeFileSync(wxsPath, template, "utf-8");
 
-  const { isBinaryInPath } = await import("../utils/deps");
+  const { isBinaryInPath } = await import("../utils/deps.js");
   let candlePath = isBinaryInPath("candle") || "candle";
   let lightPath = isBinaryInPath("light") || "light";
 

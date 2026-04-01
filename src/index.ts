@@ -1,13 +1,15 @@
-import { loadConfig } from "./config";
-import { buildNSIS } from "./packagers/nsis";
-import { buildWiX } from "./packagers/wix";
-import { signFile } from "./sign";
-import { generateUpdateMetadata } from "./update";
-import { updateExeResource, getResourceOptionsFromConfig } from "./resource";
-import { checkDependencies } from "./utils/deps";
+import { loadConfig } from "./config.js";
+import { buildNSIS } from "./packagers/nsis.js";
+import { buildWiX } from "./packagers/wix.js";
+import { signFile } from "./sign.js";
+import { generateUpdateMetadata } from "./update.js";
+import { updateExeResource, getResourceOptionsFromConfig } from "./resource.js";
+import { checkDependencies } from "./utils/deps.js";
 import { existsSync, mkdirSync, copyFileSync, readdirSync, unlinkSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { execSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
 
 export interface BuildOptions {
   target: "nsis" | "wix" | "msix";
@@ -213,6 +215,8 @@ async function main() {
   }
 }
 
-if (import.meta.main) {
+const isMain = (import.meta as any).main || (typeof process !== 'undefined' && process.argv[1] && (resolve(process.argv[1]) === fileURLToPath(import.meta.url)));
+
+if (isMain) {
   main();
 }

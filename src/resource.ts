@@ -1,6 +1,6 @@
 import path from "node:path";
 import { rcedit } from "rcedit";
-import { type ElectrobunConfig } from "./config";
+import { type ElectrobunConfig } from "./config.js";
 
 export interface ResourceOptions {
   icon?: string;
