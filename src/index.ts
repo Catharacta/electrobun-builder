@@ -90,6 +90,10 @@ export async function build(projectRoot: string, options: BuildOptions) {
                         
                         console.log(`展開完了。不要な中間ファイルを削除中...`);
                         if (existsSync(tarPath)) unlinkSync(tarPath);
+                        if (existsSync(tarZstPath)) {
+                            console.log(`不要なアーカイブを削除中: ${tarZstFile}`);
+                            unlinkSync(tarZstPath);
+                        }
                         
                     } catch (err) {
                         console.error(`アーカイブの展開またはクリーンアップに失敗しました: ${err}`);
