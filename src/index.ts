@@ -11,6 +11,7 @@ import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 
+
 export interface BuildOptions {
   target: "nsis" | "wix" | "msix";
   sign?: boolean;

@@ -1,6 +1,6 @@
 {
   "name": "electrobun-builder-for-windows",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Packaging and signing tool for Electrobun applications on Windows (NSIS, WiX, MSIX).",
   "repository": {
     "type": "git",
@@ -27,7 +27,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run"
   },
   "keywords": [
     "electrobun",
@@ -42,6 +42,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.30.3",
   "dependencies": {
+    "jiti": "^2.6.1",
     "rcedit": "^5.0.2",
     "sharp": "^0.33.5",
     "uuid": "^13.0.0"
@@ -50,6 +51,7 @@
     "@types/node": "^25.5.0",
     "@types/uuid": "^11.0.0",
     "bun-types": "latest",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.0.0"
   }
 }

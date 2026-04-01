@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { createJiti } from "jiti";
 
 export interface ElectrobunConfig {
   name: string;
@@ -52,9 +53,11 @@ export async function loadConfig(projectRoot: string): Promise<ElectrobunConfig>
   const configPath = join(projectRoot, "electrobun.config.ts");
   
   try {
-    // Bun の dynamic import を使用して TypeScript ファイルを読み込む
-    const module = await import(configPath);
-    const config = module.default || module.config;
+    // jiti を使用してランタイム (Node.js / Bun) を問わず TS ファイルをインポートできるようにします。
+    // Windows の絶対パスも透過的に処理されます。
+    const jiti = createJiti(import.meta.url);
+    const module = await jiti.import(configPath);
+    const config = (module as any).default || (module as any).config;
     
     if (!config) {
       throw new Error("electrobun.config.ts で config がエクスポートされていません。");
