@@ -83,6 +83,13 @@ electrobun-builder build --target wix --update --baseUrl https://your-server.com
 electrobun-builder build --target msix --update --baseUrl https://your-server.com/downloads
 ```
 
+### 4. Branding (Standalone)
+Apply branding (icons and metadata) to already built binaries in the `build/` folder without recreating the full installer. This is useful for adjusting executable resources quickly.
+
+```bash
+electrobun-builder brand
+```
+
 ## Configuration
 
 The builder reads `electrobun.config.ts` from your project root.
@@ -98,8 +105,8 @@ const config: ElectrobunConfig = {
     icon: "assets/app.ico", // Path to your .ico file
     productId: "com.example.myapp", // Used for WiX UpgradeCode and Registry
     installDir: "MyApp", // Folder name in Program Files
-    languageCode: "1041", // Optional: WiX LCID (Default: 1041 - Japanese)
-    languageName: "Japanese", // Optional: NSIS Language (Default: Japanese)
+    languageCode: "1033", // Optional: WiX LCID (Default: 1033 - English)
+    languageName: "English", // Optional: NSIS Language (Default: English)
     msix: {
       publisher: "CN=YourPublisher",
       publisherDisplayName: "Your Name",

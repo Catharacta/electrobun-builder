@@ -79,6 +79,13 @@ electrobun-builder build --target wix --update --baseUrl https://your-server.com
 electrobun-builder build --target msix --update --baseUrl https://your-server.com/downloads
 ```
 
+### 4. ブランディング (単独実行)
+`build/` フォルダ内にあるビルド済みのバイナリに対して、アイコンやメタデータを直接適用します。インストーラーを再生成せずに、実行ファイルのリソースのみを素早く更新したい場合に便利です。
+
+```bash
+electrobun-builder brand
+```
+
 ## 設定方法
 
 プロジェクトのルートにある `electrobun.config.ts` を読み込みます。
@@ -94,8 +101,8 @@ const config: ElectrobunConfig = {
     icon: "assets/app.ico", // .ico ファイルへのパス
     productId: "com.example.myapp", // WiX の UpgradeCode やレジストリに使用
     installDir: "MyApp", // Program Files 内のインストールフォルダ名
-    languageCode: "1041", // 任意: WiX 用言語コード (デフォルト: 1041 - 日本語)
-    languageName: "Japanese", // 任意: NSIS 用言語名 (デフォルト: Japanese)
+    languageCode: "1033", // 任意: WiX 用言語コード (デフォルト: 1033 - 英語)
+    languageName: "English", // 任意: NSIS 用言語名 (デフォルト: 英語)
     msix: {
       publisher: "CN=YourPublisher",
       publisherDisplayName: "Your Name",
