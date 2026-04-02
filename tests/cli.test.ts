@@ -7,14 +7,14 @@ describe('electrobun-builder CLI Hybrid Execution', () => {
 
   it('should run and show help with Node.js', () => {
     const output = execSync(`node ${distPath} help`, { encoding: 'utf8' });
-    expect(output).toContain('使用法: npx electrobun-builder');
+    expect(output).toContain('Usage: npx electrobun-builder');
   });
 
   it('should run and show help with Bun', () => {
     // Bun がインストールされている前提
     try {
         const output = execSync(`bun ${distPath} help`, { encoding: 'utf8' });
-        expect(output).toContain('使用法: npx electrobun-builder');
+        expect(output).toContain('Usage: npx electrobun-builder');
     } catch (err) {
         console.warn('Bun is not available, skipping Bun execution test');
     }
@@ -22,7 +22,7 @@ describe('electrobun-builder CLI Hybrid Execution', () => {
 
   it('should trigger build command with Node.js (dry-run)', () => {
     const output = execSync(`node ${distPath} build --target nsis --dry-run`, { encoding: 'utf8' });
-    expect(output).toContain('ビルドターゲット: nsis');
+    expect(output).toContain('Build target: nsis');
     expect(output).toContain('[DRY-RUN]');
   });
 });

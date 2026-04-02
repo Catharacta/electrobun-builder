@@ -12,9 +12,9 @@ export interface ResourceOptions {
 }
 
 /**
- * .exe ファイルのリソース（アイコン、バージョン情報等）を書き換えます。
- * @param exePath 対象となる .exe ファイルのパス
- * @param options 書き換え内容
+ * Updates resources (icons, version info, etc.) for the .exe file.
+ * @param exePath Path to the target .exe file
+ * @param options Content for updating
  */
 export async function updateExeResource(exePath: string, options: ResourceOptions): Promise<void> {
   const rceditOptions: any = {};
@@ -52,16 +52,16 @@ export async function updateExeResource(exePath: string, options: ResourceOption
   const absoluteExePath = path.resolve(process.cwd(), exePath);
   try {
     await rcedit(absoluteExePath, rceditOptions);
-    console.log(`[SUCCESS] .exe リソースの更新が完了しました: ${path.basename(exePath)}`);
+    console.log(`[SUCCESS] .exe resource update completed: ${path.basename(exePath)}`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.warn(`[WARNING] .exe リソースの更新に失敗しましたが、ビルドを続行します: ${message}`);
-    console.warn(`対象ファイル: ${absoluteExePath}`);
+    console.warn(`[WARNING] Failed to update .exe resources, but continuing build: ${message}`);
+    console.warn(`Target file: ${absoluteExePath}`);
   }
 }
 
 /**
- * 設定ファイルからリソースオプションを生成します。
+ * Generates resource options from the configuration file.
  */
 export function getResourceOptionsFromConfig(config: ElectrobunConfig): ResourceOptions {
   const win = config.build?.win || config.windows;

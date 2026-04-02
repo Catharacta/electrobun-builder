@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import { ElectrobunConfig } from '../config.js';
 
 /**
- * MSIX パッケージを生成します。
+ * Generates an MSIX package.
  */
 export async function packMsix(config: ElectrobunConfig, buildDir: string, outDir: string): Promise<string> {
     const appName = config.name || 'ElectrobunApp';
@@ -16,24 +16,24 @@ export async function packMsix(config: ElectrobunConfig, buildDir: string, outDi
     // MSIX must be 4 quad version (e.g. 1.0.0.0)
     const quadVersion = version.split('.').length === 3 ? `${version}.0` : version;
 
-    // 1. Assets の準備
+    // 1. Prepare Assets
     await ensureAssets(config, buildDir);
     
-    // 1.5. アプリケーションファイルのコピー
+    // 1.5. Copy application files
     copyAppFiles(config, buildDir, path.join(path.dirname(buildDir), '..'));
 
-    // 2. マニフェストの生成
+    // 2. Generate manifest
     const manifest = generateManifest(config, identifier, quadVersion);
     const manifestPath = path.join(buildDir, 'AppxManifest.xml');
     fs.writeFileSync(manifestPath, manifest);
 
-    // 3. パッケージング
+    // 3. Packaging
     const outputFilename = `${appName}_${quadVersion}_x64.msix`;
     const outputMsix = path.join(outDir, outputFilename);
     
     try {
         console.log(`Creating MSIX package: ${outputMsix}`);
-        // makeappx が PATH に通っていることは deps.ts で確認済み
+        // makeappx availability is checked in deps.ts
         execSync(`makeappx pack /d "${buildDir}" /p "${outputMsix}" /o`, { stdio: 'inherit' });
         console.log(`Successfully created MSIX package: ${outputMsix}`);
         return outputMsix;
@@ -43,7 +43,7 @@ export async function packMsix(config: ElectrobunConfig, buildDir: string, outDi
 }
 
 /**
- * AppxManifest.xml を動的に生成します。
+ * Dynamically generates AppxManifest.xml.
  */
 function generateManifest(config: ElectrobunConfig, identifier: string, version: string): string {
     const appName = config.name || 'ElectrobunApp';
@@ -60,7 +60,7 @@ function generateManifest(config: ElectrobunConfig, identifier: string, version:
 
     let manifest = fs.readFileSync(manifestTemplatePath, 'utf8');
 
-    // 基本項目の置換
+    // Replace basic items
     manifest = manifest
         .replace(/{{IDENTIFIER}}/g, identifier)
         .replace(/{{PUBLISHER}}/g, publisher)
@@ -70,16 +70,16 @@ function generateManifest(config: ElectrobunConfig, identifier: string, version:
         .replace(/{{DESCRIPTION}}/g, description)
         .replace(/{{EXECUTABLE_NAME}}/g, executableName);
 
-    // 言語タグの置換
-    const languageCode = config.windows?.languageCode || "1041";
+    // Replace language tags
+    const languageCode = config.windows?.languageCode || "1033";
     const languageTag = languageCode === "1041" ? "ja-JP" : "en-US";
     manifest = manifest.replace(/{{LANGUAGE_TAG}}/g, languageTag);
 
-    // Extensions の生成
+    // Generate Extensions
     const extensions = generateExtensionsXml(msixConfig?.extensions);
     manifest = manifest.replace(/{{EXTENSIONS}}/g, extensions);
 
-    // Capabilities の追加生成
+    // Generate additional Capabilities
     const capabilities = generateCapabilitiesXml(msixConfig?.capabilities);
     manifest = manifest.replace(/{{CAPABILITIES}}/g, capabilities);
 
@@ -87,7 +87,7 @@ function generateManifest(config: ElectrobunConfig, identifier: string, version:
 }
 
 /**
- * 拡張機能の XML を生成します。
+ * Generates XML for extensions.
  */
 function generateExtensionsXml(extensionsConfig: any): string {
     if (!extensionsConfig) return '';
@@ -123,7 +123,7 @@ function generateExtensionsXml(extensionsConfig: any): string {
 }
 
 /**
- * 権限の XML を生成します。
+ * Generates XML for capabilities.
  */
 function generateCapabilitiesXml(capabilities?: string[]): string {
     if (!capabilities) return '';
@@ -131,8 +131,8 @@ function generateCapabilitiesXml(capabilities?: string[]): string {
 }
 
 /**
- * MSIX に必要なアセット類（ロゴ等）を準備します。
- * config.windows.icon から各サイズを自動生成します。
+ * Prepares assets (logos, etc.) required for MSIX.
+ * Automatically generates various sizes from config.windows.icon.
  */
 async function ensureAssets(config: ElectrobunConfig, buildDir: string): Promise<void> {
     const assetsDir = path.join(buildDir, 'Assets');
@@ -167,14 +167,14 @@ async function ensureAssets(config: ElectrobunConfig, buildDir: string): Promise
             }
         }
 
-        // プレースホルダー（フォールバック）
+        // Placeholder (fallback)
         const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
         fs.writeFileSync(assetPath, transparentPng);
     }
 }
 
 /**
- * アプリケーションファイルを MSIX 用のディレクトリにコピーします
+ * Copies application files to the MSIX directory.
  */
 function copyAppFiles(config: ElectrobunConfig, buildDir: string, projectRoot: string): void {
     const appFolderName = config.windows?.installDir || config.name;
@@ -183,7 +183,7 @@ function copyAppFiles(config: ElectrobunConfig, buildDir: string, projectRoot: s
 
     console.log(`Copying app files from ${sourceDir} to ${buildDir}`);
     
-    // シンプルな再帰コピー
+    // Simple recursive copy
     function copyRecursive(src: string, dest: string) {
         if (!fs.existsSync(src)) return;
         const stat = fs.statSync(src);
@@ -193,8 +193,8 @@ function copyAppFiles(config: ElectrobunConfig, buildDir: string, projectRoot: s
                 copyRecursive(path.join(src, child), path.join(dest, child));
             });
         } else {
-            // Assets フォルダやマニフェストは既に生成されている可能性があるので上書き注意
-            // (通常はサブフォルダに分かれているので問題ないはず)
+            // Note: Assets folder and manifest might already have been generated, so avoid overwriting them.
+            // (They are usually in subfolders, so this shouldn't be an issue.)
             if (path.basename(dest) === 'AppxManifest.xml' || dest.includes(`${path.sep}Assets${path.sep}`)) {
                 return;
             }

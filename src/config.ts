@@ -53,20 +53,20 @@ export async function loadConfig(projectRoot: string): Promise<ElectrobunConfig>
   const configPath = join(projectRoot, "electrobun.config.ts");
   
   try {
-    // jiti を使用してランタイム (Node.js / Bun) を問わず TS ファイルをインポートできるようにします。
-    // Windows の絶対パスも透過的に処理されます。
+    // jiti allows importing TS files regardless of the runtime (Node.js / Bun).
+    // Absolute paths on Windows are also handled transparently.
     const jiti = createJiti(import.meta.url);
     const module = await jiti.import(configPath);
     const config = (module as any).default || (module as any).config;
     
     if (!config) {
-      throw new Error("electrobun.config.ts で config がエクスポートされていません。");
+      throw new Error("No config exported in electrobun.config.ts.");
     }
     
     return config as ElectrobunConfig;
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(`設定ファイルの読み込みに失敗しました: ${error.message}`);
+      throw new Error(`Failed to load config file: ${error.message}`);
     }
     throw error;
   }

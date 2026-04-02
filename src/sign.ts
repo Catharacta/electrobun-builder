@@ -9,15 +9,15 @@ export interface SignOptions {
 }
 
 /**
- * Windows SDK の signtool.exe を使用してファイルを署名します。
+ * Signs the file using signtool.exe from the Windows SDK.
  */
 export async function signFile(filePath: string, options: SignOptions): Promise<void> {
     if (!fs.existsSync(filePath)) {
-        throw new Error(`署名対象のファイルが見つかりません: ${filePath}`);
+        throw new Error(`File to sign not found: ${filePath}`);
     }
 
     if (!fs.existsSync(options.pfxPath)) {
-        throw new Error(`PFX証明書が見つかりません: ${options.pfxPath}`);
+        throw new Error(`PFX certificate not found: ${options.pfxPath}`);
     }
 
     const digest = options.digestAlgorithm || 'SHA256';
@@ -35,16 +35,16 @@ export async function signFile(filePath: string, options: SignOptions): Promise<
     command += ` /fd ${digest} /tr "${timestamp}" /td ${digest} "${filePath}"`;
 
     try {
-        console.log(`署名を実行中: ${filePath}`);
+        console.log(`Executing signature: ${filePath}`);
         execSync(command, { stdio: 'inherit' });
-        console.log(`署名に成功しました: ${filePath}`);
+        console.log(`Successfully signed: ${filePath}`);
     } catch (error) {
-        throw new Error(`署名に失敗しました: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(`Signature failed: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 
 /**
- * 署名の検証を行います。
+ * Verifies the digital signature.
  */
 export async function verifySignature(filePath: string): Promise<boolean> {
     try {

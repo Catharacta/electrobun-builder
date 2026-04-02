@@ -2,21 +2,21 @@ import { execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
 /**
- * PATH に指定されたバイナリが存在するか、または標準的なインストールパスを確認します。
+ * Checks if the binary specified in PATH exists, or checks standard installation paths.
  */
 export function isBinaryInPath(binaryName: string): string | null {
     try {
-        // 1. まずは通常の PATH から検索
+        // 1. Search in the normal PATH first
         const whereOutput = execSync(`where ${binaryName}`, { stdio: 'pipe' }).toString().trim();
         if (whereOutput) {
-            // 複数行返ってくる場合があるため、最初の1行を選択
+            // Select the first line as multiple lines may be returned
             return whereOutput.split('\n')[0].trim();
         }
     } catch {
         // ignore error and try standard paths
     }
 
-    // 2. 標準的なインストールパスを検索 (Windows)
+    // 2. Search standard installation paths (Windows)
     const standardPaths: Record<string, string[]> = {
         makensis: [
             "C:\\Program Files (x86)\\NSIS\\makensis.exe",
@@ -80,7 +80,7 @@ const DEPS: Record<string, DependencyInfo> = {
 };
 
 /**
- * ターゲットやオプションに応じて必要な依存関係をチェックします。
+ * Checks for necessary dependencies based on the target and options.
  */
 export async function checkDependencies(target: string, sign: boolean): Promise<void> {
     const required: string[] = [];

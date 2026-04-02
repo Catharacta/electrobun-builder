@@ -12,7 +12,7 @@ export interface UpdateMetadata {
 }
 
 /**
- * ファイルの SHA-256 ハッシュ値を計算します。
+ * Calculates the SHA-256 hash value of a file.
  */
 export async function calculateSha256(filePath: string): Promise<string> {
     const fileBuffer = fs.readFileSync(filePath);
@@ -22,7 +22,7 @@ export async function calculateSha256(filePath: string): Promise<string> {
 }
 
 /**
- * 自動更新用のメタデータ（latest.json）を生成します。
+ * Generates metadata (latest.json) for automatic updates.
  */
 export async function generateUpdateMetadata(
     binaryPath: string,
@@ -49,5 +49,5 @@ export async function generateUpdateMetadata(
     }
 
     fs.writeFileSync(outPath, JSON.stringify(metadata, null, 2), 'utf8');
-    console.log(`自動更新メタデータを生成しました: ${outPath}`);
+    console.log(`Generated update metadata: ${outPath}`);
 }

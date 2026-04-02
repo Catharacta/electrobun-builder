@@ -23,7 +23,7 @@ export interface BuildOptions {
 }
 
 /**
- * Electrobun アプリケーションを指定されたターゲット形式でビルドします。
+ * Builds the Electrobun application for the specified target format.
  */
 export async function build(projectRoot: string, options: BuildOptions) {
   const config = await loadConfig(projectRoot);
@@ -34,16 +34,16 @@ export async function build(projectRoot: string, options: BuildOptions) {
   if (!options.dryRun) {
     await checkDependencies(target, !!shouldSign);
   } else {
-    console.log("[DRY-RUN] 依存関係チェックをスキップします。");
+    console.log("[DRY-RUN] Skipping dependency checks.");
   }
 
-  console.log(`ビルドターゲット: ${target}`);
+  console.log(`Build target: ${target}`);
 
-  // dist ディレクトリの作成
+  // Create dist directory
   const distDir = join(projectRoot, "dist");
   if (!existsSync(distDir)) mkdirSync(distDir, { recursive: true });
 
-  // --- 実行ファイルの配置と名称変更の自動化 ---
+  // --- Automation of executable placement and renaming ---
   const winConfig = config.build?.win || config.windows;
   const appName = config.name;
   const appFolderName = winConfig?.installDir || appName;
@@ -57,13 +57,13 @@ export async function build(projectRoot: string, options: BuildOptions) {
       mkdirSync(join(appDir, "bin"), { recursive: true });
   }
 
-  // --- 実行ファイルのパス設定 ---
+  // --- Path settings for executables ---
   const launcherExePath = join(appDir, "bin", "launcher.exe");
   const iconSource = winConfig?.icon ? resolve(projectRoot, winConfig.icon) : null;
   const iconDest = join(appDir, "icon.ico");
 
 
-  // --- アーカイブの展開 (useAsar: false の場合) ---
+  // --- Unpack archive (if useAsar: false) ---
   if (winConfig?.useAsar === false) {
       const resourcesDir = join(appDir, "Resources");
       
@@ -78,32 +78,32 @@ export async function build(projectRoot: string, options: BuildOptions) {
               const tarPath = join(resourcesDir, tarFile);
               
                 if (options.dryRun) {
-                    console.log(`[DRY-RUN] アーカイブを展開およびクリーンアップします: ${tarZstFile}`);
+                    console.log(`[DRY-RUN] Decompressing and cleaning up archive: ${tarZstFile}`);
                 } else {
-                    console.log(`アーカイブを展開中: ${tarZstFile}`);
+                    console.log(`Decompressing archive: ${tarZstFile}`);
                     try {
                         execSync(`"${zstdPath}" decompress -i "${tarZstPath}" -o "${tarPath}"`, { stdio: "inherit" });
                         
                         const mergeTargetDir = join(appDir, "..");
-                        console.log(`展開先: ${mergeTargetDir}`);
+                        console.log(`Extraction destination: ${mergeTargetDir}`);
                         execSync(`tar -xf "${tarPath}" -C "${mergeTargetDir}"`, { stdio: "inherit" });
                         
-                        console.log(`展開完了。不要な中間ファイルを削除中...`);
+                        console.log(`Extraction completed. Deleting temporary files...`);
                         if (existsSync(tarPath)) unlinkSync(tarPath);
                         if (existsSync(tarZstPath)) {
-                            console.log(`不要なアーカイブを削除中: ${tarZstFile}`);
+                            console.log(`Deleting unnecessary archive: ${tarZstFile}`);
                             unlinkSync(tarZstPath);
                         }
                         
                     } catch (err) {
-                        console.error(`アーカイブの展開またはクリーンアップに失敗しました: ${err}`);
+                        console.error(`Failed to decompress or clean up archive: ${err}`);
                     }
                 }
           }
       }
   }
 
-  // --- 実行ファイルの準備 (bin 内に配置) ---
+  // --- Prepare executables (place in bin folder) ---
   const genuineLauncherPath = join(projectRoot, "node_modules", "electrobun", "dist-win-x64", "launcher.exe");
   const genuineBunPath = join(projectRoot, "node_modules", "electrobun", "dist-win-x64", "bun.exe");
   
@@ -111,17 +111,17 @@ export async function build(projectRoot: string, options: BuildOptions) {
       const appBinDir = join(appDir, "bin");
       if (!existsSync(appBinDir)) mkdirSync(appBinDir, { recursive: true });
 
-      // 1. bun.exe の配置
+      // 1. Placement of bun.exe
       const destBunPath = join(appBinDir, "bun.exe");
       if (existsSync(genuineBunPath)) {
-          console.log(`Bun を配置中: ${genuineBunPath} -> ${destBunPath}`);
+          console.log(`Placing Bun: ${genuineBunPath} -> ${destBunPath}`);
           copyFileSync(genuineBunPath, destBunPath);
       }
 
-      // 2. launcher.exe の配置
+      // 2. Placement of launcher.exe
       const binLauncherPath = join(appBinDir, "launcher.exe");
       if (existsSync(genuineLauncherPath)) {
-          console.log(`ランチャーを配置中: ${genuineLauncherPath} -> ${binLauncherPath}`);
+          console.log(`Placing launcher: ${genuineLauncherPath} -> ${binLauncherPath}`);
           copyFileSync(genuineLauncherPath, binLauncherPath);
 
           const extensionlessLauncher = join(appBinDir, "launcher");
@@ -130,33 +130,33 @@ export async function build(projectRoot: string, options: BuildOptions) {
           }
       }
 
-      // 3. その他の必須 DLL の補完
+      // 3. Complementing other required DLLs
       const requiredDlls = ["libNativeWrapper.dll", "WebView2Loader.dll", "d3dcompiler_47.dll", "webgpu_dawn.dll"];
       requiredDlls.forEach(dll => {
           const src = join(projectRoot, "node_modules", "electrobun", "dist-win-x64", dll);
           const dest = join(appBinDir, dll);
           if (existsSync(src) && !existsSync(dest)) {
-              console.log(`不足している DLL を補完中: ${dll}`);
+              console.log(`Complementing missing DLL: ${dll}`);
               copyFileSync(src, dest);
           }
       });
   }
 
   if (!options.dryRun && iconSource && existsSync(iconSource)) {
-      console.log(`アイコンを同梱中: ${iconDest}`);
+      console.log(`Bundling icon: ${iconDest}`);
       copyFileSync(iconSource, iconDest);
   }
 
-  // --- リソースパッチ (アイコン、バージョン情報等の埋め込み) ---
+  // --- Resource patching (embedding icon, version info, etc.) ---
   if (!options.dryRun) {
-      console.log("実行ファイルのリソースを更新中...");
+      console.log("Updating executable resources...");
       const resourceOptions = getResourceOptionsFromConfig(config);
       try {
           if (existsSync(launcherExePath)) {
               await updateExeResource(launcherExePath, resourceOptions);
           }
       } catch (err) {
-          console.warn(`警告: リソースの更新に失敗しました: ${err}`);
+          console.warn(`Warning: Failed to update resources: ${err}`);
       }
   }
 
@@ -177,7 +177,7 @@ export async function build(projectRoot: string, options: BuildOptions) {
       await generateUpdateMetadata(outputPath, config.version || "1.0.0", baseUrl, distDir);
     }
     
-    console.log(`\nビルド成功: ${outputPath}`);
+    console.log(`\nBuild success: ${outputPath}`);
   }
 }
 
@@ -187,15 +187,16 @@ async function main() {
   const command = args[0] || "help";
 
   if (command === "help") {
-    console.log("使用法: npx electrobun-builder <command> [options]");
-    console.log("コマンド:");
-    console.log("  build --target <nsis|wix>  インストーラーをビルドします (デフォルト: nsis)");
-    console.log("オプション:");
-    console.log("  --target <t>       ビルドターゲット (nsis, wix)");
-    console.log("  --dry-run          コマンド実行をスキップして検証のみ行います");
-    console.log("  --sign             ビルド後に署名を実行します");
-    console.log("  --pfx <path>       PFX 証明書のパス");
-    console.log("  --password <pw>    証明書のパスワード");
+    console.log("Usage: npx electrobun-builder <command> [options]");
+    console.log("Commands:");
+    console.log("  build --target <nsis|wix>  Build the installer (default: nsis)");
+    console.log("  brand                      Apply branding (icons/metadata) to pre-built binaries");
+    console.log("Options:");
+    console.log("  --target <t>       Build target (nsis, wix)");
+    console.log("  --dry-run          Skip execution and only perform validation");
+    console.log("  --sign             Perform code signing after build");
+    console.log("  --pfx <path>       Path to PFX certificate");
+    console.log("  --password <pw>    Certificate password");
     return;
   }
 
@@ -213,10 +214,50 @@ async function main() {
         baseUrl: args.lastIndexOf("--baseUrl") !== -1 ? args[args.lastIndexOf("--baseUrl") + 1] : undefined,
         dryRun: args.includes("--dry-run")
       });
+    } else if (command === "brand") {
+      await brand(projectRoot);
     }
   } catch (error) {
-    console.error(`エラー: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
+  }
+}
+
+/**
+ * Searches the build folder and applies branding to all found executables
+ * based on the configuration in electrobun.config.ts.
+ */
+export async function brand(projectRoot: string) {
+  console.log("Starting branding process for executables...");
+  const config = await loadConfig(projectRoot);
+  const resourceOptions = getResourceOptionsFromConfig(config);
+  
+  // Search directory
+  const buildDir = join(projectRoot, "build");
+  if (!existsSync(buildDir)) {
+    console.log("build directory not found. Please build the project first.");
+    return;
+  }
+
+  // Recursively explore folders to find .exe files
+  const processFolder = async (dir: string) => {
+    const entries = readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await processFolder(fullPath);
+      } else if (entry.isFile() && (entry.name === "launcher.exe" || entry.name === "bun.exe" || entry.name === `${config.name}.exe`)) {
+        console.log(`Applying branding to: ${fullPath}`);
+        await updateExeResource(fullPath, resourceOptions);
+      }
+    }
+  };
+
+  try {
+    await processFolder(buildDir);
+    console.log("Branding process completed successfully.");
+  } catch (err) {
+    console.error(`Error occurred during branding: ${err}`);
   }
 }
 

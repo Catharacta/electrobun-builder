@@ -30,10 +30,10 @@ export interface WiXOptions {
 }
 
 export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): Promise<string> {
-  // src/packagers/wix.ts から見て ../../templates/ 
+  // Looking for ../../templates/ relative to src/packagers/wix.ts
   const templatePath = resolve(__dirname, "..", "..", "templates", "installer.wxs.template");
   if (!existsSync(templatePath)) {
-      throw new Error(`WiX テンプレートが見取かりません: ${templatePath}`);
+      throw new Error(`WiX template not found: ${templatePath}`);
   }
   
   let template = readFileSync(templatePath, "utf-8");
@@ -47,11 +47,11 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
   const identifier = config.id || `${config.name}.example.com`;
   const upgradeCode = uuidv5(identifier, NAMESPACE);
 
-  // コンポーネントの動的生成 (再帰構造)
+  // Dynamic generation of components (recursive structure)
   const { structure, refs } = generateWixComponents(buildSourceDir, config);
 
-  // プレースホルダーの置換
-  const languageCode = winConfig?.languageCode || "1041";
+  // Replace placeholders
+  const languageCode = winConfig?.languageCode || "1033";
   const codepage = languageCode === "1041" ? "932" : "1252";
 
   const replacements: Record<string, string> = {
@@ -70,7 +70,7 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
     "{{ICON_ID}}": "AppIcon",
   };
 
-  // 1. ショートカット・レジストリコンポーネントの追加
+  // 1. Add shortcut and registry components
   let finalRefs = refs;
   const safeCompanyName = (config.author || "ElectrobunUser").replace(/[^a-zA-Z0-9]/g, ""); 
   const safeAppName = config.name.replace(/[^a-zA-Z0-9]/g, "");
@@ -83,7 +83,7 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
   finalRefs += `            <Component Id="ApplicationShortcut" Directory="ApplicationProgramsFolder" Guid="${uuidv5(`shortcut_app_${identifier}`, NAMESPACE)}" Win64="yes">\n`;
   finalRefs += `                <Shortcut Id="ApplicationStartMenuShortcut" \n`;
   finalRefs += `                          Name="${safeAppNameXml}" \n`;
-  finalRefs += `                          Description="${safeAppNameXml} を起動します" \n`;
+  finalRefs += `                          Description="Starts ${safeAppNameXml}" \n`;
   finalRefs += `                          Target="[INSTALLFOLDER]bin\\launcher.exe" \n`;
   finalRefs += `                          Icon="AppIcon" \n`;
   finalRefs += `                          WorkingDirectory="INSTALLFOLDER"/>\n`;
@@ -94,7 +94,7 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
   finalRefs += `            <Component Id="DesktopShortcut" Directory="DesktopFolder" Guid="${uuidv5(`shortcut_desktop_${identifier}`, NAMESPACE)}" Win64="yes">\n`;
   finalRefs += `                <Shortcut Id="ApplicationDesktopShortcut" \n`;
   finalRefs += `                          Name="${safeAppNameXml}" \n`;
-  finalRefs += `                          Description="${safeAppNameXml} を起動します" \n`;
+  finalRefs += `                          Description="Starts ${safeAppNameXml}" \n`;
   finalRefs += `                          Target="[INSTALLFOLDER]bin\\launcher.exe" \n`;
   finalRefs += `                          Icon="AppIcon" \n`;
   finalRefs += `                          WorkingDirectory="INSTALLFOLDER"/>\n`;
@@ -114,7 +114,7 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
   let candlePath = isBinaryInPath("candle") || "candle";
   let lightPath = isBinaryInPath("light") || "light";
 
-  // WiX v3.14 の標準パスをチェック
+  // Check standard paths for WiX v3.14
   if (candlePath === "candle" && !existsSync(candlePath)) {
     const defaultCandle = "C:\\Program Files (x86)\\WiX Toolset v3.14\\bin\\candle.exe";
     if (existsSync(defaultCandle)) {
@@ -129,12 +129,12 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
   }
 
   if (options.dryRun) {
-    console.log(`[DRY-RUN] WiX テンプレート生成完了: ${wxsPath}`);
+    console.log(`[DRY-RUN] WiX template generation completed: ${wxsPath}`);
     return wxsPath;
   }
 
   return new Promise((resolve, reject) => {
-    // WiX v3 の場合: candle -> light
+    // For WiX v3: candle -> light
     const candle = spawn(`"${candlePath}"`, ["-out", join(options.projectRoot, "dist", "installer.wixobj"), wxsPath], { shell: true });
 
     candle.stdout.on("data", (data) => {
@@ -162,11 +162,11 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
           if (lCode === 0) {
             resolve(msiOutput);
           } else {
-            reject(new Error(`light がエラーコード ${lCode} で終了しました。`));
+            reject(new Error(`light exited with error code ${lCode}.`));
           }
         });
       } else {
-        reject(new Error(`candle がエラーコード ${code} で終了しました。`));
+        reject(new Error(`candle exited with error code ${code}.`));
       }
     });
 
@@ -179,8 +179,8 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
 function generateWixComponents(sourceDir: string, config: ElectrobunConfig): { structure: string; refs: string } {
   let structureXml = "";
   let refsXml = "";
-  const usedIds = new Map<string, string>(); // ID -> Path のチェック用マップ
-  const directoryIds = new Set<string>(); // 遭遇したすべてのディレクトリID
+  const usedIds = new Map<string, string>(); // Map for ID -> Path check
+  const directoryIds = new Set<string>(); // Set of all encountered directory IDs
   
   const safeCompanyName = (config.author || "ElectrobunUser").replace(/[^a-zA-Z0-9]/g, ""); 
   const safeAppName = config.name.replace(/[^a-zA-Z0-9]/g, "");

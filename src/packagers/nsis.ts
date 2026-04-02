@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import { type ElectrobunConfig } from "../config.js";
 
-// ESM での __dirname の代わり (または import.meta.dirname を使用可能ならそちら)
+// Replacement for __dirname in ESM (use import.meta.dirname if available)
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export interface NSISOptions {
@@ -14,12 +14,12 @@ export interface NSISOptions {
 }
 
 export async function buildNSIS(config: ElectrobunConfig, options: NSISOptions): Promise<string> {
-  // テンプレートパスをライブラリのインストール場所から解決
-  // src/packagers/nsis.ts から見て ../../templates/ 
+  // Resolve template path from the library installation location
+  // Looking for ../../templates/ relative to src/packagers/nsis.ts
   const templatePath = resolve(__dirname, "..", "..", "templates", "installer.nsi.template");
   
   if (!existsSync(templatePath)) {
-      throw new Error(`NSIS テンプレートが見つかりません: ${templatePath}`);
+      throw new Error(`NSIS template not found: ${templatePath}`);
   }
   
   let template = readFileSync(templatePath, "utf-8");
@@ -32,7 +32,7 @@ export async function buildNSIS(config: ElectrobunConfig, options: NSISOptions):
     return existsSync(subDir) ? subDir : join(options.projectRoot, "build", "stable-win-x64");
   })();
 
-  // フォルダ全体のサイズ（KB）を計算
+  // Calculate total folder size (KB)
   const getFolderSize = (dir: string): number => {
       let size = 0;
       const files = readdirSync(dir);
@@ -51,7 +51,7 @@ export async function buildNSIS(config: ElectrobunConfig, options: NSISOptions):
   const totalSizeBytes = getFolderSize(buildSourceDir);
   const estimatedSizeKB = Math.round(totalSizeBytes / 1024).toString();
 
-  // プレースホルダーの置換
+  // Replace placeholders
   const replacements: Record<string, string> = {
     "{{APP_NAME}}": config.name,
     "{{APP_VERSION}}": config.version,
@@ -61,7 +61,7 @@ export async function buildNSIS(config: ElectrobunConfig, options: NSISOptions):
     "{{PUBLISHER}}": config.author || config.name,
     "{{ICON_PATH}}": winConfig?.icon ? resolve(options.projectRoot, winConfig.icon) : "",
     "{{ICON_FILENAME}}": "icon.ico",
-    "{{LANGUAGE_NAME}}": winConfig?.languageName || (winConfig?.languageCode === "1041" || !winConfig?.languageCode ? "Japanese" : "English"),
+    "{{LANGUAGE_NAME}}": winConfig?.languageName || (winConfig?.languageCode === "1041" ? "Japanese" : "English"),
     "{{BUILD_SOURCE_DIR}}": buildSourceDir,
     "{{ESTIMATED_SIZE}}": estimatedSizeKB,
   };
@@ -72,26 +72,26 @@ export async function buildNSIS(config: ElectrobunConfig, options: NSISOptions):
 
   const nsiPath = join(options.projectRoot, "dist", "installer.nsi");
   
-  // 日本語文字を含むため、UTF-8 BOM 付きで保存して makensis.exe に正しく認識させる
+  // Save with UTF-8 BOM so makensis.exe recognizes characters correctly (especially for Japanese)
   writeFileSync(nsiPath, "\uFEFF" + template, "utf-8");
 
   const { isBinaryInPath } = await import("../utils/deps.js");
   const makensisPath = isBinaryInPath("makensis") || "makensis";
 
   if (options.dryRun) {
-    console.log(`[DRY-RUN] NSIS テンプレート生成完了: ${nsiPath}`);
+    console.log(`[DRY-RUN] NSIS template generation completed: ${nsiPath}`);
     return nsiPath;
   }
 
   return new Promise((resolve, reject) => {
-    // makensis コマンドの実行
+    // Execute makensis command
     const makensis = spawn(makensisPath, [nsiPath]);
 
     makensis.on("close", (code) => {
       if (code === 0) {
         resolve(join(options.projectRoot, "dist", options.outputName));
       } else {
-        reject(new Error(`makensis がエラーコード ${code} で終了しました。`));
+        reject(new Error(`makensis exited with error code ${code}.`));
       }
     });
 
