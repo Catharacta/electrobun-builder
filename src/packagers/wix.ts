@@ -148,12 +148,13 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
   return new Promise((resolve, reject) => {
     // For WiX v3: candle -> light
     // Explicitly set -codepage 65001 if using UTF-8 characters (like Japanese locales)
-    const candleArgs = ["-out", join(options.projectRoot, "dist", "installer.wixobj"), wxsPath];
+    const candleArgs = ["-nologo", "-out", join(options.projectRoot, "dist", "installer.wixobj")];
     if (codepage === "65001") {
-      candleArgs.unshift("-codepage", "65001");
+      candleArgs.push("-codepage", "65001");
     }
+    candleArgs.push(wxsPath);
     
-    const candle = spawn(`"${candlePath}"`, candleArgs, { shell: true });
+    const candle = spawn(candlePath, candleArgs, { shell: false });
 
     candle.stdout.on("data", (data) => {
       console.log(`WiX Candle: ${data}`);
@@ -166,12 +167,12 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
     candle.on("close", (code) => {
       if (code === 0) {
         const msiOutput = join(options.projectRoot, "dist", options.outputName);
-        const lightArgs = ["-out", msiOutput, join(options.projectRoot, "dist", "installer.wixobj")];
+        const lightArgs = ["-nologo", "-out", msiOutput, join(options.projectRoot, "dist", "installer.wixobj")];
         if (codepage === "65001") {
-          lightArgs.unshift("-codepage", "65001");
+          lightArgs.push("-codepage", "65001");
         }
         
-        const light = spawn(`"${lightPath}"`, lightArgs, { shell: true });
+        const light = spawn(lightPath, lightArgs, { shell: false });
         
         light.stdout.on("data", (data) => {
           console.log(`WiX Light: ${data}`);
