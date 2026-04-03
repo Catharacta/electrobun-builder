@@ -16,7 +16,7 @@
                     {{DIRECTORY_STRUCTURE}}
                 </Directory>
             </Directory>
-            <!-- 追加: スタートメニューとデスクトップ -->
+            <!-- Start menu and Desktop shortcuts -->
             <Directory Id="ProgramMenuFolder">
                 <Directory Id="ApplicationProgramsFolder" Name="{{APP_NAME}}"/>
             </Directory>

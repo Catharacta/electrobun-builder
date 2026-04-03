@@ -1,3 +1,6 @@
+/**
+ * All comments and messages in this library must be in English.
+ */
 import path from "node:path";
 import { rcedit } from "rcedit";
 import { type ElectrobunConfig } from "./config.js";

@@ -24,12 +24,12 @@ Page instfiles
 Section "Install"
   SetOutPath "$INSTDIR"
   File /r "{{BUILD_SOURCE_DIR}}\*.*"
-  ; アイコンを明示的にルートに書き出し（再配布・レジストリ用）
+  ; Explicitly copy icon to root for redistribution and registry
   File /oname=icon.ico "{{ICON_PATH}}"
   
   WriteUninstaller "$INSTDIR\uninstall.exe"
   
-  ; Add/Remove Programs (インストールされているアプリ一覧に表示するための情報)
+  ; Add/Remove Programs (Registry information for the installed apps list)
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayName" "${APP_NAME}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "UninstallString" '"$INSTDIR\uninstall.exe"'
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayVersion" "${APP_VERSION}"
@@ -48,7 +48,7 @@ Section "Install"
 SectionEnd
 
 Section "Uninstall"
-  ; レジストリの削除
+  ; Delete registry keys
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
   
   Delete "$DESKTOP\${APP_NAME}.lnk"

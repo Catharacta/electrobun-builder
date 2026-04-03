@@ -1,3 +1,6 @@
+/**
+ * All comments and messages in this library must be in English.
+ */
 import { execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 

@@ -1,3 +1,6 @@
+/**
+ * All comments and messages in this library must be in English.
+ */
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';

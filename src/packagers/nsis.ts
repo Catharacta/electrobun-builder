@@ -1,3 +1,6 @@
+/**
+ * All comments and messages in this library must be in English.
+ */
 import { readFileSync, writeFileSync, existsSync, statSync, readdirSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";

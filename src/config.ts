@@ -1,3 +1,6 @@
+/**
+ * All comments and messages in this library must be in English.
+ */
 import { join } from "node:path";
 import { createJiti } from "jiti";
 
@@ -18,7 +21,7 @@ export interface ElectrobunConfig {
       languageName?: string;
     }
   };
-  // 下位互換性のため維持するか、移行するか
+  // Keep for backward compatibility or migrate
   windows?: {
     icon?: string;
     productId?: string;

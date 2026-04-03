@@ -1,3 +1,6 @@
+/**
+ * All comments and messages in this library must be in English.
+ */
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';

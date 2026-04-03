@@ -1,3 +1,6 @@
+/**
+ * All comments and messages in this library must be in English.
+ */
 import { loadConfig } from "./config.js";
 import { buildNSIS } from "./packagers/nsis.js";
 import { buildWiX } from "./packagers/wix.js";

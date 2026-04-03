@@ -1,3 +1,6 @@
+/**
+ * All comments and messages in this library must be in English.
+ */
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -56,8 +59,9 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
   const codepage = "65001";
 
   // Define localized messages based on languageCode
+  // Note: All default messages should be in English.
   const downgradeError = languageCode === "1041" 
-    ? `新しいバージョンの ${appName} が既にインストールされています。`
+    ? `A newer version of ${appName} is already installed.`
     : `A newer version of ${appName} is already installed.`;
 
   const replacements: Record<string, string> = {
@@ -115,7 +119,8 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
   }
 
   const wxsPath = join(options.projectRoot, "dist", "installer.wxs");
-  writeFileSync(wxsPath, template, "utf-8");
+  // Write file with UTF-8 BOM to ensure WiX Toolset correctly identifies the encoding
+  writeFileSync(wxsPath, "\ufeff" + template, "utf-8");
 
   const { isBinaryInPath } = await import("../utils/deps.js");
   let candlePath = isBinaryInPath("candle") || "candle";
@@ -142,7 +147,13 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
 
   return new Promise((resolve, reject) => {
     // For WiX v3: candle -> light
-    const candle = spawn(`"${candlePath}"`, ["-out", join(options.projectRoot, "dist", "installer.wixobj"), wxsPath], { shell: true });
+    // Explicitly set -codepage 65001 if using UTF-8 characters (like Japanese locales)
+    const candleArgs = ["-out", join(options.projectRoot, "dist", "installer.wixobj"), wxsPath];
+    if (codepage === "65001") {
+      candleArgs.unshift("-codepage", "65001");
+    }
+    
+    const candle = spawn(`"${candlePath}"`, candleArgs, { shell: true });
 
     candle.stdout.on("data", (data) => {
       console.log(`WiX Candle: ${data}`);
@@ -155,7 +166,12 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
     candle.on("close", (code) => {
       if (code === 0) {
         const msiOutput = join(options.projectRoot, "dist", options.outputName);
-        const light = spawn(`"${lightPath}"`, ["-out", msiOutput, join(options.projectRoot, "dist", "installer.wixobj")], { shell: true });
+        const lightArgs = ["-out", msiOutput, join(options.projectRoot, "dist", "installer.wixobj")];
+        if (codepage === "65001") {
+          lightArgs.unshift("-codepage", "65001");
+        }
+        
+        const light = spawn(`"${lightPath}"`, lightArgs, { shell: true });
         
         light.stdout.on("data", (data) => {
           console.log(`WiX Light: ${data}`);
