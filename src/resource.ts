@@ -9,6 +9,8 @@ export interface ResourceOptions {
   fileDescription?: string;
   legalCopyright?: string;
   productName?: string;
+  internalName?: string;
+  originalFilename?: string;
 }
 
 /**
@@ -29,24 +31,30 @@ export async function updateExeResource(exePath: string, options: ResourceOption
     rceditOptions["file-version"] = options.version;
   }
 
+  rceditOptions["version-string"] = rceditOptions["version-string"] || {};
+  
   if (options.companyName) {
-    rceditOptions["version-string"] = rceditOptions["version-string"] || {};
     rceditOptions["version-string"].CompanyName = options.companyName;
   }
 
   if (options.productName) {
-    rceditOptions["version-string"] = rceditOptions["version-string"] || {};
     rceditOptions["version-string"].ProductName = options.productName;
   }
 
   if (options.fileDescription) {
-    rceditOptions["version-string"] = rceditOptions["version-string"] || {};
     rceditOptions["version-string"].FileDescription = options.fileDescription;
   }
 
   if (options.legalCopyright) {
-    rceditOptions["version-string"] = rceditOptions["version-string"] || {};
     rceditOptions["version-string"].LegalCopyright = options.legalCopyright;
+  }
+
+  if (options.internalName) {
+    rceditOptions["version-string"].InternalName = options.internalName;
+  }
+
+  if (options.originalFilename) {
+    rceditOptions["version-string"].OriginalFilename = options.originalFilename;
   }
 
   const absoluteExePath = path.resolve(process.cwd(), exePath);
@@ -70,6 +78,9 @@ export function getResourceOptionsFromConfig(config: ElectrobunConfig): Resource
     version: config.version,
     productName: config.name,
     fileDescription: config.name,
-    legalCopyright: `Copyright © ${new Date().getFullYear()} ${config.author || ""}`.trim(),
+    companyName: config.author || "Catharacta",
+    internalName: config.name,
+    originalFilename: `${config.name}.exe`,
+    legalCopyright: `Copyright © ${new Date().getFullYear()} ${config.author || "Catharacta"}`.trim(),
   };
 }

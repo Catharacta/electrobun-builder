@@ -52,7 +52,13 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
 
   // Replace placeholders
   const languageCode = winConfig?.languageCode || "1033";
-  const codepage = languageCode === "1041" ? "932" : "1252";
+  // Always use UTF-8 (65001) to support Japanese characters in templates/metadata
+  const codepage = "65001";
+
+  // Define localized messages based on languageCode
+  const downgradeError = languageCode === "1041" 
+    ? `新しいバージョンの ${appName} が既にインストールされています。`
+    : `A newer version of ${appName} is already installed.`;
 
   const replacements: Record<string, string> = {
     "{{APP_NAME}}": config.name,
@@ -68,6 +74,7 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
     "{{PLATFORM}}": "x64",
     "{{ICON_PATH}}": join(options.projectRoot, winConfig?.icon || "icons/icon.ico"),
     "{{ICON_ID}}": "AppIcon",
+    "{{DOWNGRADE_ERROR_MESSAGE}}": downgradeError,
   };
 
   // 1. Add shortcut and registry components

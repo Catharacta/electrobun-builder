@@ -3,7 +3,7 @@
     <Product Id="*" Name="{{APP_NAME}}" Language="{{LANGUAGE_CODE}}" Codepage="{{CODEPAGE}}" Version="{{APP_VERSION}}" Manufacturer="{{COMPANY_NAME}}" UpgradeCode="{{UPGRADE_CODE}}">
         <Package InstallerVersion="200" Compressed="yes" InstallScope="perUser" InstallPrivileges="limited" Platform="{{PLATFORM}}" />
 
-        <MajorUpgrade DowngradeErrorMessage="新しいバージョンの {{APP_NAME}} が既にインストールされています。" />
+        <MajorUpgrade DowngradeErrorMessage="{{DOWNGRADE_ERROR_MESSAGE}}" />
         <MediaTemplate EmbedCab="yes" />
 
         <Icon Id="{{ICON_ID}}" SourceFile="{{ICON_PATH}}" />

@@ -1,6 +1,6 @@
 {
   "name": "electrobun-builder-for-windows",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Packaging and signing tool for Electrobun applications on Windows (NSIS, WiX, MSIX).",
   "repository": {
     "type": "git",
