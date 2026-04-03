@@ -1,25 +1,32 @@
-# ロードマップ (ROADMAP.md)
+# Roadmap (ROADMAP.md)
 
-## フェーズ 1: 基盤構築 (完了)
-- [x] Git リポジトリの初期化と構造定義
-- [x] 設定ファイルのパース (`electrobun.config.ts`)
-- [x] 基本的な CLI コマンドの実装
+## Phase 1: Core Foundation (Completed)
+- [x] Initializing Git repository and structure definition
+- [x] Configuration parsing (`electrobun.config.ts`)
+- [x] Basic CLI command implementation
 
-## フェーズ 2: Windows リソース処理 (完了)
-- [x] `rcedit` を用いたバイナリメタデータの編集実装
-- [x] アイコン（.ico）の埋め込み機能基盤
+## Phase 2: Windows Resource Processing (Completed)
+- [x] Editing binary metadata using `rcedit`
+- [x] Embedding icon (.ico) support
 
-## フェーズ 3: インストーラー生成の自動化 (完了)
-- [x] NSIS (EXE) テンプレートの作成とビルドロジックの実装
-- [x] WiX (MSI) テンプレートの作成とビルドロジックの実装
+## Phase 3: Installer Automation (Completed)
+- [x] NSIS (EXE) template and build logic implementation
+- [x] WiX (MSI) template and build logic implementation (v0.1.x)
 
+## Phase 4: Advanced Features (Completed - v0.3.7)
+- [x] **Code Signing**: Integration of `signtool` across all targets
+- [x] **Auto Update**: Generation of `latest.json` for Electrobun's `Updater`
+- [x] **MSIX Packaging**: Support for AppxManifest and Sparse Manifests
+- [x] **Internationalization**: Full English codebase and English messaging policy
 
-## フェーズ 4: 高度な機能
-- [ ] コード署名 (SignTool) の統合
-- [ ] 自動更新（Auto-updater）対応のメタデータ生成
-- [ ] MSIX 形式への対応（将来検討）
+## Phase 5: Stabilization (Ongoing/Completed)
+- [x] **Encoding Fix (v0.3.7)**: Resolving WiX `LGHT0311` via UTF-8 BOM and XML header logic
+- [x] **Spawn Fix (v0.3.6)**: Enforcing `shell: false` for stable argument passing on Windows
+- [ ] Extensive tests with various Electrobun apps (Ongoing)
+- [x] CI/CD pipeline via GitHub Actions
+- [x] Documentation Refactoring (README.md, README.ja.md)
 
-## フェーズ 5: 安定化とリリース
-- [ ] 複数の Electrobun アプリでのビルドテスト
-- [ ] GitHub Actions による CI/CD 構築
-- [ ] ドキュメント（README.md）の整備
+## Phase 6: Future Enhancement
+- [ ] macOS (DMG/PKG) support (Exploratory)
+- [ ] Linux (AppImage/Deb) support (Exploratory)
+- [ ] Integration with Electrobun CLI as an official plugin

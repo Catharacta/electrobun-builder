@@ -147,12 +147,8 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
 
   return new Promise((resolve, reject) => {
     // For WiX v3: candle -> light
-    // Explicitly set -codepage 65001 if using UTF-8 characters (like Japanese locales)
-    const candleArgs = ["-nologo", "-out", join(options.projectRoot, "dist", "installer.wixobj")];
-    if (codepage === "65001") {
-      candleArgs.push("-codepage", "65001");
-    }
-    candleArgs.push(wxsPath);
+    // Use BOM + XML encoding header instead of command line flags (recommended by WiX docs)
+    const candleArgs = ["-nologo", "-out", join(options.projectRoot, "dist", "installer.wixobj"), wxsPath];
     
     const candle = spawn(candlePath, candleArgs, { shell: false });
 
@@ -168,9 +164,6 @@ export async function buildWiX(config: ElectrobunConfig, options: WiXOptions): P
       if (code === 0) {
         const msiOutput = join(options.projectRoot, "dist", options.outputName);
         const lightArgs = ["-nologo", "-out", msiOutput, join(options.projectRoot, "dist", "installer.wixobj")];
-        if (codepage === "65001") {
-          lightArgs.push("-codepage", "65001");
-        }
         
         const light = spawn(lightPath, lightArgs, { shell: false });
         

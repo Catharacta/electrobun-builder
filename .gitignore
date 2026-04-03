@@ -42,3 +42,7 @@ test-app/
 *.wixobj
 *.wixpdb
 # ただし、テンプレートや特定のツールは含める必要があるため、必要に応じて ! で除外解除
+
+# Internal documents
+REQUIREMENTS.md
+ROADMAP.md
