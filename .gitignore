@@ -46,3 +46,6 @@ test-app/
 # Internal documents
 REQUIREMENTS.md
 ROADMAP.md
+
+# Local configurations
+electrobun.config.ts
