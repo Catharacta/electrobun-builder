@@ -5,6 +5,7 @@
 import { loadConfig } from "./config.js";
 import { buildNSIS } from "./packagers/nsis.js";
 import { buildWiX } from "./packagers/wix.js";
+import { packMsix } from "./packagers/msix.js";
 import { signFile } from "./sign.js";
 import { generateUpdateMetadata } from "./update.js";
 import { updateExeResource, getResourceOptionsFromConfig } from "./resource.js";
@@ -169,6 +170,13 @@ export async function build(projectRoot: string, options: BuildOptions) {
     outputPath = await buildNSIS(config, { projectRoot, outputName: `${appName}-setup.exe`, dryRun: options.dryRun });
   } else if (target === "wix") {
     outputPath = await buildWiX(config, { projectRoot, outputName: `${appName}.msi`, dryRun: options.dryRun });
+  } else if (target === "msix") {
+    if (!options.dryRun) {
+        outputPath = await packMsix(config, appDir, distDir);
+    } else {
+        console.log(`[DRY-RUN] Would build MSIX for ${appName}`);
+        outputPath = join(distDir, `${appName}_${config.version}_x64.msix`);
+    }
   }
 
   if (!options.dryRun) {
@@ -193,10 +201,10 @@ async function main() {
   if (command === "help") {
     console.log("Usage: npx electrobun-builder <command> [options]");
     console.log("Commands:");
-    console.log("  build --target <nsis|wix>  Build the installer (default: nsis)");
+    console.log("  build --target <nsis|wix|msix>  Build the installer (default: nsis)");
     console.log("  brand                      Apply branding (icons/metadata) to pre-built binaries");
     console.log("Options:");
-    console.log("  --target <t>       Build target (nsis, wix)");
+    console.log("  --target <t>       Build target (nsis, wix, msix)");
     console.log("  --dry-run          Skip execution and only perform validation");
     console.log("  --sign             Perform code signing after build");
     console.log("  --pfx <path>       Path to PFX certificate");
