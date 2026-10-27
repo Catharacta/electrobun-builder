@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * All comments and messages in this library must be in English.
  */
